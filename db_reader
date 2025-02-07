@@ -1,0 +1,19 @@
+import csv
+
+csv_file = "chord-fingers.csv"
+
+unique_values = set() # Store unique values from CHORD-TYPE column
+
+with open(csv_file, newline='', encoding='utf-8') as file:
+    reader = csv.reader(file, delimiter=';')  # Semicolon-separated values
+    next(reader) # Skipping the header
+
+    for row in reader:
+
+        chord_structure = row[2].strip('"') # "row" ironically refers to columns. row[2] is the second column, aka CHORD-TYPE
+        values = chord_structure.split(';') 
+        unique_values.update(values) 
+
+# Output
+print(f"Unique chord structure values: {sorted(unique_values)}")
+print(f"Total unique values: {len(unique_values)}")
