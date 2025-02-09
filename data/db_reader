@@ -1,7 +1,5 @@
 import csv
 
-print("HI") 
-
 csv_file = "./data/chord-fingers.csv"
 
 def unique_values(csv_file):
@@ -13,10 +11,30 @@ def unique_values(csv_file):
 
         for row in reader:
 
-            chord_structure = row[1].strip('"') # "row" ironically refers to columns. row[2] is the second column, aka CHORD-TYPE
+            chord_structure = row[2].strip('"') # "row" ironically refers to columns. row[2] is the second column, aka CHORD-TYPE
             values = chord_structure.split(';') 
             unique_values.update(values) 
 
     # Output
-    print(f"Unique chord structure values: {sorted(unique_values)}")
+    print(f"Unique chord structure values: {unique_values}")
     print(f"Total unique values: {len(unique_values)}")
+
+# unique_values(csv_file)
+
+
+def unique_chords(csv_file, new_line = ''):
+    unique_chords = set()
+
+    with open(csv_file) as file:
+        reader = csv.reader(file)
+        next(reader)
+
+        for row in reader:
+            chord_type = row[1]
+            values = chord_type.split(";")
+            unique_chords.update(values)
+
+    print(f"Unique chord types:{unique_chords}")
+    print(f"Number of chord types: {len(unique_chords)}")
+
+unique_chords(csv_file)
