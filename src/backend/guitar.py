@@ -92,7 +92,7 @@ class Guitar:
                     out_chord[string][index] = note
         return out_chord
     
-    def closest_notes(self):
+    def closest_notes(self, s, i, j):
         
         notes = self.note_matches.items()
         DP = {string: {} for string, _ in notes} # Initializing a nested dict
@@ -134,8 +134,7 @@ class Guitar:
         
         # we are so out here
                     
-
-
+                    
         # for note in notes:
         # Store distance from estimated fret
         # CONDITIONS:
