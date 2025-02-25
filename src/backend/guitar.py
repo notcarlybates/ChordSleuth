@@ -144,7 +144,8 @@ class Guitar:
 
 
 
-notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
+notes = ["A", "As", "B", "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs"]
+all_notes = ["Ab," "A", "As", "Bb", "B", "C", "Cs", "Db", "D", "Ds", "Eb", "E", "F", "Fs", "Gb", "G", "Gs"]
 tuning = ["E", "A", "D", "G", "B", "E"]
 frets = 25 # Defining the number of notes generated (including root)
 # input_note = # Coordinates of predicted chord location 
