@@ -11,7 +11,7 @@ class Guitar:
         Don't look too closely at this current setup.
         It works for now, but I have some technical debt to repay.
 
-        Refactoring comes early March. Stay tuned.
+        Refactoring comes early April. Stay tuned.
     '''
 
     def __init__(self, tuning, notes, frets):

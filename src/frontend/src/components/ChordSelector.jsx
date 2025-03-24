@@ -44,8 +44,8 @@ const ChordSelector = ({ onSelect }) => {
   return (
     <div
       ref={containerRef}
-      className={`transition-all duration-300 w-full max-w-md border rounded-lg p-4 ${
-        isOpen ? 'bg-white shadow-lg' : 'bg-red-200 hover:bg-red-300 cursor-pointer'
+      className={`transition-all duration-300 w-auto max-w-md rounded-lg p-7 ${
+        isOpen ? 'bg-red-100' : 'bg-red-200 hover:bg-red-300 cursor-pointer'
       }`}
       onClick={() => setIsOpen(true)}
     >
@@ -53,8 +53,8 @@ const ChordSelector = ({ onSelect }) => {
         <div className="flex justify-between gap-4">
           {/* Preview Section */}
           <div className="flex flex-col items-center justify-between w-1/2">
-            <div className="text-xl font-semibold">{`${root}${modifier}`}</div>
-            <div className="text-sm text-gray-600">Fret {fret}</div>
+            <div className="text-xl font-sans font-extralight">{`${root}${modifier}`}</div>
+            <div className="text-sm font-sans font-extralight text-gray-600">Fret {fret}</div>
 
             {/* Tabs */}
             <div className="flex gap-2 mt-4">
@@ -65,8 +65,8 @@ const ChordSelector = ({ onSelect }) => {
                     e.stopPropagation();
                     setActiveTab(tab);
                   }}
-                  className={`px-2 py-1 text-sm rounded ${
-                    tab === activeTab ? 'bg-gray-300 font-light' : 'hover:bg-gray-100'
+                  className={`px-2 py-1 text-sm font-sans font-extralight  rounded ${
+                    tab === activeTab ? 'bg-gray-300 font-extralight' : 'hover:bg-gray-100'
                   }`}
                 >
                   {tab}
@@ -84,8 +84,8 @@ const ChordSelector = ({ onSelect }) => {
                   e.stopPropagation();
                   setValue(opt);
                 }}
-                className={`cursor-pointer px-2 py-1 rounded text-sm text-center ${
-                  getValue() === opt ? 'bg-gray-200 font-semibold' : 'hover:bg-gray-100'
+                className={`cursor-pointer px-2 py-1 font-sans font-extralight rounded text-sm text-center ${
+                  getValue() === opt ? 'bg-gray-200 font-extralight' : 'hover:bg-gray-100'
                 }`}
               >
                 {opt}
@@ -94,7 +94,7 @@ const ChordSelector = ({ onSelect }) => {
           </div>
         </div>
       ) : (
-        <div className="text-center text-xl">{`${root}${modifier} (Fret ${fret})`}</div>
+        <div className="text-center font-sans font-extralight text-xl">{`${root}${modifier} (Fret ${fret})`}</div>
       )}
     </div>
   );
