@@ -44,9 +44,9 @@ class Guitar:
 
     def find_range(self):
         global fret_guess
-        global string_guess
+        # global string_guess
         try:
-            string_guess = int(input("\nInput estimated string: "))  # Convert input to integer
+            # string_guess = int(input("\nInput estimated string: "))  # Convert input to integer
             fret_guess = int(input("Input estimated fret: "))      # Convert input to integer
         except ValueError:
             print("Invalid input! Please enter numbers for string and fret.")
@@ -62,8 +62,8 @@ class Guitar:
             for string, frets in self.fretboard.items()
         }
 
-        # Get the specific note the user guessed
-        guess = self.fretboard.get(string_guess, {}).get(fret_guess, "Invalid input") # Building a filtered version of our existing fretboard
+        # # Get the specific note the user guessed
+        # guess = self.fretboard.get(string_guess, {}).get(fret_guess, "Invalid input") # Building a filtered version of our existing fretboard
 
         return fret_range # Return sliced fretboard
 

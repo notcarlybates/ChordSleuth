@@ -44,7 +44,7 @@ const ChordSelector = ({ onSelect }) => {
   return (
     <div
       ref={containerRef}
-      className={`transition-all duration-300 w-auto max-w-md rounded-lg p-7 ${
+      className={`transition-all duration-300 w-auto max-w-md border rounded-lg p-7 ${
         isOpen ? 'bg-red-100' : 'bg-red-200 hover:bg-red-300 cursor-pointer'
       }`}
       onClick={() => setIsOpen(true)}

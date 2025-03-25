@@ -43,7 +43,7 @@ const ChordVisualizer = () => {
         <Fretboard
           width={420}
           height={250}
-          numFrets={24}
+          numFrets={4}
           numStrings={6}
           tuning={selectedChordData.TUNING}
           fingerPositions={fingerPositions}

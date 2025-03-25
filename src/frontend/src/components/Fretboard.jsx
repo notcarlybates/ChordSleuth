@@ -4,13 +4,13 @@ export default function Fretboard({
   numFrets,
   numStrings,
   tuning = [],
+  fingerPositions = [],
 }) {
   const spacingX = width / numFrets;
   const spacingY = height / (numStrings - 1);
-  const labelMargin = 30; // space to the left for labels
+  const labelMargin = 30;
 
   const lines = [
-    // String (horizontal) lines
     ...Array.from({ length: numStrings }).map((_, i) => (
       <line
         key={`string-${i}`}
@@ -20,11 +20,8 @@ export default function Fretboard({
         y2={i * spacingY}
         stroke="black"
         strokeWidth={1}
-        strokeLinecap="round"
-        shapeRendering="crispEdges"
       />
     )),
-    // Fret (vertical) lines
     ...Array.from({ length: numFrets + 1 }).map((_, i) => (
       <line
         key={`fret-${i}`}
@@ -33,26 +30,48 @@ export default function Fretboard({
         x2={i * spacingX}
         y2={height}
         stroke="black"
-        strokeWidth={1.}
-        strokeLinecap="round"
-        shapeRendering="crispEdges"
+        strokeWidth={1}
       />
     )),
   ];
 
+  const markers = fingerPositions.map((pos, stringIndex) => {
+    if (pos === 'x') {
+      const fretNum = 0;
+      return (
+        <rect
+          key={`marker-${stringIndex}`}
+          x={fretNum * spacingX - 15}
+          y={stringIndex * spacingY - 15}
+          width={30}
+          height={30}
+          fill="red"
+          rx = "4" 
+        />
+      );
+    } else {
+      const fretNum = parseInt(pos, 10);
+      if (isNaN(fretNum)) return null;
+      return (
+        <circle
+          key={`marker-${stringIndex}`}
+          cx={fretNum * spacingX - spacingX / 2}
+          cy={stringIndex * spacingY}
+          r={15}
+          fill="red"
+        />
+      );
+    }
+  });
+
   return (
     <div className="Fretboard w-full max-w-2xl aspect-[1.6] max-h-[320px] flex justify-center items-center">
-      {/* SVG wrapper for positioning */}
-      <div
-        className="relative"
-        style={{ width: `${width}px`, height: `${height}px` }}
-      >
-        {/* HTML tuning labels absolutely locked to SVG */}
+      <div className="relative" style={{ width: `${width}px`, height: `${height}px` }}>
         <div className="absolute left-0 top-0 z-10 h-full w-[30px]">
           {tuning.map((label, i) => (
             <div
               key={`label-${i}`}
-              className="text-black text-lg font-sans font-extralight text-right pr-6"
+              className="text-black text-2xl font-sans font-extralight text-right -translate-x-14"
               style={{
                 position: 'absolute',
                 top: `${i * spacingY}px`,
@@ -65,16 +84,15 @@ export default function Fretboard({
           ))}
         </div>
 
-        {/* Actual SVG */}
         <svg
-          className="absolute top-0 left-[30px]"
+          className="absolute top-0"
           viewBox={`0 0 ${width} ${height}`}
           width={width}
           height={height}
-          overflow= 'visible'
-          preserveAspectRatio="xMidYMid meet"
+          overflow="visible"
         >
           {lines}
+          {markers}
         </svg>
       </div>
     </div>
