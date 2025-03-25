@@ -1,24 +1,20 @@
 from enum import Enum
+from guitar import Guitar
+from chordInterpreter import Chord
 
-from fastapi import fastapi
+from fastapi import FastAPI
 from pydantic import BaseModel
 
 app = FastAPI()
 
-class Category(Enum):
-    TOOLS  = "tools"
-    CONSUMABLES = "consumables"
-
-class Item(BaseModel):
-    name: str
-    price: float
-    count: int
-    id: int
-    category: Category
-
-# FING Algorithm Here
-
+items = []
 
 @app.get('/')
-def index() -> dict[int, dict[int, dict['fret': fret] dict['note': note]]]:
-    return {"items": items}
+def root():
+    return {"Hello": "World"}
+
+
+@app.post("/items")
+def create_items(item: str):
+    items.append(item)
+    return items
