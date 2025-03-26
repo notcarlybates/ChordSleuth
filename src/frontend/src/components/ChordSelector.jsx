@@ -23,6 +23,29 @@ const ChordSelector = ({ onSelect }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [root, modifier, fret, onSelect]);
 
+  // Send POST request to backend when root, modifier, or fret change
+  useEffect(() => {
+    const sendDataToBackend = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/fing', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ root, modifier, fret }),
+        });
+        const data = await response.json();
+        if (data.fing) {
+          console.log("Finger positions:", data.fing);
+        }
+      } catch (error) {
+        console.error("Error sending data to backend:", error);
+      }
+    };
+
+    sendDataToBackend();
+  }, [root, modifier, fret]);
+
   const getActiveOptions = () => {
     if (activeTab === "root") return roots;
     if (activeTab === "modifier") return modifiers;

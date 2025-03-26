@@ -16,11 +16,12 @@ class Guitar:
         Refactoring comes early April. Stay tuned.
     '''
 
-    def __init__(self, tuning, notes, frets, root, mod):
+    def __init__(self, tuning, notes, frets, fret_guess, root, mod):
 
         self.tuning = tuning
         self.notes = notes
         self.frets = frets
+        self.fret_guess = fret_guess
         self.chord = Chord(root, mod)
         self.mod = mod
         self.note_names = self.chord.calc_notes()
@@ -46,12 +47,6 @@ class Guitar:
         return neck
 
     def find_range(self):
-        try:
-            self.fret_guess = int(input("Input estimated fret: "))
-        except ValueError:
-            print("Invalid input! Please enter a number.")
-            return {}
-        
         min_fret = max(self.fret_guess - 4, 0)
         max_fret = min(self.fret_guess + 4, self.frets)
 
@@ -98,12 +93,12 @@ class Guitar:
         return selected
 
 
-# ---- Usage ----
-notes = ["A", "As", "B", "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs"]
-tuning = ["E", "A", "D", "G", "B", "E"]
-frets = 25
-root = 'D'
-mod = 'sus4'
+# # ---- Usage ----
+# notes = ["A", "As", "B", "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs"]
+# tuning = ["E", "A", "D", "G", "B", "E"]
+# frets = 25
+# root = 'D'
+# mod = 'sus4'
 
-guitar = Guitar(tuning, notes, frets, root, mod)
-print(f'\nOutput:\n{guitar.FING}\n')
+# guitar = Guitar(tuning, notes, frets, root, mod)
+# print(f'\nOutput:\n{guitar.FING}\n')

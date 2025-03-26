@@ -2,22 +2,22 @@ import { useState } from 'react';
 import ChordSelector from './ChordSelector';
 import Fretboard from './Fretboard';
 
-// Sample chord data (use actual dataset in production)
-const chordData = [
-  {
-    CHORD_ROOT: 'C#',
-    CHORD_TYPE: 'min',
-    FINGER_POSITIONS: 'x,x,2,4,1,3',
-    TUNING: ['E', 'A', 'D', 'G', 'B', 'E']
-  },
-  {
-    CHORD_ROOT: 'C#',
-    CHORD_TYPE: '9(#11)',
-    FINGER_POSITIONS: 'x,2,1,3,4,1',
-    TUNING: ['C#', 'G#', 'C#', 'F#', 'G#', 'C#']
-  },
-  // Add more chords as necessary
-];
+// // Sample chord data (use actual dataset in production)
+// const chordData = [
+//   {
+//     CHORD_ROOT: 'C#',
+//     CHORD_TYPE: 'min',
+//     FINGER_POSITIONS: 'x,x,2,4,1,3',
+//     TUNING: ['E', 'A', 'D', 'G', 'B', 'E']
+//   },
+//   {
+//     CHORD_ROOT: 'C#',
+//     CHORD_TYPE: '9(#11)',
+//     FINGER_POSITIONS: 'x,2,1,3,4,1',
+//     TUNING: ['C#', 'G#', 'C#', 'F#', 'G#', 'C#']
+//   },
+//   // Add more chords as necessary
+// ];
 
 const ChordVisualizer = () => {
   const [selectedChord, setSelectedChord] = useState({ chord: 'Cmaj7', fret: 3 });

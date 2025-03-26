@@ -25,7 +25,7 @@ structures = {
     "bb7": 9 
 }
 
-test_notes = ["A", "As", "B", "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs"]
+test_notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
 test_mods = ['maj', 'min', '7', 'maj7', 'sus4', 'dim', 'aug']
 chord_struct = {
     '7': ['1', '3', '5', 'b7'],
@@ -69,7 +69,7 @@ class Chord:
         
         return self.notes
 
-# Example usage:
-gmaj7 = Chord('G', '5')
-g_notes = gmaj7.calc_notes()
-print(g_notes)
+# # Example usage:
+# gmaj7 = Chord('G', '5')
+# g_notes = gmaj7.calc_notes()
+# print(g_notes)
