@@ -37,6 +37,8 @@ async def get_fing(data: ChordRequest, request: Request):
     g.FING = g.closest_notes()
 
     frets_only = {key: value['fret'] for key, value in g.FING.items()}
-    print(f"Calculated Fret Positions: {frets_only}")
+    fing_list = list(frets_only.values())
+    
+    print(f"Calculated Fret Positions: {fing_list}")
 
-    return {"fing": frets_only}
+    return {"fing": fing_list}

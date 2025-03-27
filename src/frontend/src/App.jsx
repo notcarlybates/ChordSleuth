@@ -1,27 +1,12 @@
 import { useState } from 'react';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
-import "./App.css";
+import sendDataToBackend from './api/sendDataToBackend';
+// import { ChordBox, ChordDisplay } from './components/ChordBox';
+import './App.css';
 
-// Sample chord data
-const chordData = [
-  {
-    CHORD_ROOT: 'C#',
-    CHORD_TYPE: 'min',
-    FINGER_POSITIONS: 'x,x,2,4,1,3',
-    TUNING: ['E', 'A', 'D', 'G', 'B', 'E']
-  },
-  {
-    CHORD_ROOT: 'C#',
-    CHORD_TYPE: '9(#11)',
-    FINGER_POSITIONS: 'x,2,1,3,4,1',
-    TUNING: ['C#', 'G#', 'C#', 'F#', 'G#', 'C#']
-  },
-  // Add more chords as needed
-];
-
-let selectedColor = 'bg-red-200';
-let standardTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
+let selectedColor = 'bg-red-200'
+let tuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 
 const ChordBox = ({ chord, size = 'h-full w-full', fontsize = 'text-3lg', color = selectedColor, isSquare = true }) => (
   <div
@@ -43,37 +28,31 @@ const ChordDisplay = () => (
 );
 
 const App = () => {
-  const [selectedChord, setSelectedChord] = useState({ chord: 'C#min', fret: 3 });
+  const [fingerPositions, setFingerPositions] = useState([]);
 
-  const handleChordSelect = ({ chord, fret }) => {
-    setSelectedChord({ chord, fret });
+  const handleChordSelect = ({ root, modifier, fret }) => {
+    // Send chord data to backend, get finger positions
+    sendDataToBackend({ root, modifier, fret }).then((fing) => {
+      if (fing) setFingerPositions(fing); // Update the finger positions state
+    });
   };
 
-  const selectedChordData = chordData.find(
-    (ch) => `${ch.CHORD_ROOT}${ch.CHORD_TYPE}` === selectedChord.chord
-  );
-
-  const fingerPositions = selectedChordData?.FINGER_POSITIONS?.split(',') ?? [];
-  const tuning = selectedChordData?.TUNING ?? standardTuning;
-
   return (
-    <div className='WholePageContainer w-dvw h-dvh items-center align-center shrink'>
-      <section className='MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-3/4 h-dvh'>
-        <header className='Title font-sans mt-8 font-bold text-5xl'>
-          chord sleuth
-        </header>
-        <div className='MainBox h-full w-full shrink flex flex-col justify-evenly items-center mt-8'>
-          <div className='ChordSelect flex w-full h-auto justify-center mb-6'>
+    <div className="WholePageContainer w-dvw h-dvh items-center align-center shrink">
+      <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-3/4 h-dvh">
+        <header className="Title font-sans mt-8 font-bold text-5xl">chord sleuth</header>
+        <div className="MainBox h-full w-full shrink flex flex-col justify-evenly items-center mt-8">
+          <div className="ChordSelect flex w-full h-auto justify-center mb-6">
             <ChordSelector onSelect={handleChordSelect} />
           </div>
-          <div className='Fretboard flex justify-center shrink w-full h-auto items-center'>
+          <div className="Fretboard flex justify-center shrink w-full h-auto items-center">
             <Fretboard
               width={420}
               height={320}
               numFrets={4}
               numStrings={6}
               tuning={tuning}
-              fingerPositions={fingerPositions}
+              fingerPositions={fingerPositions} // Pass updated finger positions
             />
           </div>
           <div className='Generation flex flex-col shrink justify-center items-center h-auto w-full mt-6'>

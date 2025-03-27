@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import sendDataToBackend from '../api/sendDataToBackend';
 
 const roots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const modifiers = ['maj', 'min', '7', 'maj7', 'sus4', 'dim', 'aug'];
@@ -12,39 +13,27 @@ const ChordSelector = ({ onSelect }) => {
   const [activeTab, setActiveTab] = useState("root");
   const containerRef = useRef(null);
 
+  // Fetch and send finger positions whenever chord changes
+  useEffect(() => {
+    const fetchAndSendPositions = async () => {
+      const fing = await sendDataToBackend({ root, modifier, fret });
+      if (fing && onSelect) {
+        onSelect({ root, modifier, fret, fing });
+      }
+    };
+    fetchAndSendPositions();
+  }, [root, modifier, fret, onSelect]);
+
+  // Handle click outside to just close the selector
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setIsOpen(false);
-        if (onSelect) onSelect({ chord: `${root}${modifier}`, fret });
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [root, modifier, fret, onSelect]);
-
-  // Send POST request to backend when root, modifier, or fret change
-  useEffect(() => {
-    const sendDataToBackend = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/fing', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ root, modifier, fret }),
-        });
-        const data = await response.json();
-        if (data.fing) {
-          console.log("Finger positions:", data.fing);
-        }
-      } catch (error) {
-        console.error("Error sending data to backend:", error);
-      }
-    };
-
-    sendDataToBackend();
-  }, [root, modifier, fret]);
+  }, []);
 
   const getActiveOptions = () => {
     if (activeTab === "root") return roots;
@@ -67,7 +56,7 @@ const ChordSelector = ({ onSelect }) => {
   return (
     <div
       ref={containerRef}
-      className={`transition-all duration-300 w-auto max-w-md border rounded-lg p-7 ${
+      className={`transition-all duration-300 w-auto max-w-md rounded-lg p-7 ${
         isOpen ? 'bg-red-100' : 'bg-red-200 hover:bg-red-300 cursor-pointer'
       }`}
       onClick={() => setIsOpen(true)}
@@ -88,8 +77,8 @@ const ChordSelector = ({ onSelect }) => {
                     e.stopPropagation();
                     setActiveTab(tab);
                   }}
-                  className={`px-2 py-1 text-sm font-sans font-extralight  rounded ${
-                    tab === activeTab ? 'bg-gray-300 font-extralight' : 'hover:bg-gray-100'
+                  className={`px-2 pr- py-1 text-sm font-sans font-extralight rounded ${
+                    tab === activeTab ? 'bg-red-200 font-extralight' : 'hover:bg-red-100'
                   }`}
                 >
                   {tab}
@@ -99,7 +88,7 @@ const ChordSelector = ({ onSelect }) => {
           </div>
 
           {/* Scroll-Wheel Section */}
-          <div className="w-1/2 max-h-40 overflow-y-scroll scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 rounded border px-2 py-1">
+          <div className="w-1/2 max-h-40 overflow-y-scroll bg-red-100 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 rounded  px-5 py-1">
             {getActiveOptions().map((opt) => (
               <div
                 key={opt}
@@ -107,8 +96,8 @@ const ChordSelector = ({ onSelect }) => {
                   e.stopPropagation();
                   setValue(opt);
                 }}
-                className={`cursor-pointer px-2 py-1 font-sans font-extralight rounded text-sm text-center ${
-                  getValue() === opt ? 'bg-gray-200 font-extralight' : 'hover:bg-gray-100'
+                className={`cursor-pointer px-5 py-1 font-sans font-extralight rounded text-sm text-center ${
+                  getValue() === opt ? 'bg-red-200 font-extralight' : 'hover:bg-red-50'
                 }`}
               >
                 {opt}
