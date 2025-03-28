@@ -2,13 +2,11 @@ import { useState } from 'react';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
 import sendDataToBackend from './api/sendDataToBackend';
-// import { ChordBox, ChordDisplay } from './components/ChordBox';
 import './App.css';
 
-let selectedColor = 'bg-red-200'
-let tuning = ['E', 'A', 'D', 'G', 'B', 'E'].reverse();
+const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 
-const ChordBox = ({ chord, size = 'h-full w-full', fontsize = 'text-3lg', color = selectedColor, isSquare = true }) => (
+const ChordBox = ({ chord, size = 'h-full w-full', fontsize = 'text-3lg', color = 'bg-red-200', isSquare = true }) => (
   <div
     className={`mx-5 flex items-center justify-center rounded-lg shrink font-thin font-sans text-2xl ${fontsize} ${size} ${color} ${
       isSquare ? 'aspect-square' : ''
@@ -29,11 +27,39 @@ const ChordDisplay = () => (
 
 const App = () => {
   const [fingerPositions, setFingerPositions] = useState([]);
+  const [tuning, setTuning] = useState([...defaultTuning]);
+  const [chordState, setChordState] = useState({
+    root: 'D',
+    modifier: 'maj7',
+    fret: 3
+  });
 
-  const handleChordSelect = ({ root, modifier, fret }) => {
-    // Send chord data to backend, get finger positions
-    sendDataToBackend({ root, modifier, fret }).then((fing) => {
-      if (fing) setFingerPositions(fing); // Update the finger positions state
+  const handleChordSelect = async ({ root, modifier, fret, tuning: newTuning }) => {
+    try {
+      const fing = await sendDataToBackend({ 
+        root, 
+        modifier, 
+        fret, 
+        tuning: newTuning || tuning 
+      });
+      if (fing) {
+        setFingerPositions(fing);
+        // Update chord state
+        setChordState({ root, modifier, fret });
+      }
+    } catch (error) {
+      console.error('Error sending chord data:', error);
+    }
+  };
+
+  const handleTuningChange = (newTuning) => {
+    setTuning(newTuning);
+    // Re-trigger chord calculation with new tuning using current chord state
+    handleChordSelect({ 
+      root: chordState.root, 
+      modifier: chordState.modifier, 
+      fret: chordState.fret,
+      tuning: newTuning 
     });
   };
 
@@ -42,30 +68,43 @@ const App = () => {
       <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-3/4 h-dvh">
         <header className="Title font-sans mt-8 font-bold text-5xl">chord sleuth</header>
         <div className="MainBox h-full w-full shrink flex flex-col justify-evenly items-center mt-8">
-          <div className="ChordSelect flex w-full h-auto justify-center mb-6">
-            <ChordSelector onSelect={handleChordSelect} />
-          </div>
-          <div className="Fretboard flex justify-center shrink w-full h-auto items-center">
-            <Fretboard
-              width={420}
-              height={250}
-              numFrets={4}
-              numStrings={6}
-              tuning={tuning}
-              fingerPositions={fingerPositions}
-            />
-          </div>
-          <div className='Generation flex flex-col shrink justify-center items-center h-auto w-full mt-6'>
-            <ChordBox
-              chord="regenerate"
-              isSquare={false}
-              size="px-6 pt-2 pb-3"
-              fontsize="text-xl"
-              color="bg-red-200 hover:bg-red-300 transition cursor-pointer"
-            />
-            <ChordDisplay />
-          </div>
-        </div>
+  {/* ChordSelect remains the same */}
+  <div className="ChordSelect flex w-full h-auto justify-center mb-6">
+    <ChordSelector 
+      onSelect={handleChordSelect} 
+      onTuningChange={handleTuningChange}
+      currentTuning={tuning}
+      initialChord={chordState}
+    />
+  </div>
+
+  {/* New container for Fretboard and Generation */}
+  <div className="ContentContainer flex-1 min-h-0 w-full flex flex-col items-center">
+    <div className="FretboardContainer flex-1 min-h-0 w-full flex justify-center items-center">
+      <Fretboard
+        width="100%"
+        height="100%"
+        maxWidth={420}
+        maxHeight={250}
+        numFrets={4}
+        numStrings={6}
+        tuning={tuning}
+        fingerPositions={fingerPositions}
+      />
+    </div>
+    
+    <div className='Generation flex-none w-full flex flex-col justify-center items-center mt-4'>
+      <ChordBox
+        chord="regenerate"
+        isSquare={false}
+        size="px-6 pt-2 pb-3"
+        fontsize="text-xl"
+        color="bg-red-200 hover:bg-red-300 transition cursor-pointer"
+      />
+      <ChordDisplay />
+    </div>
+  </div>
+</div>
       </section>
     </div>
   );

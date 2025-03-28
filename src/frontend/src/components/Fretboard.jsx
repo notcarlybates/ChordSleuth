@@ -1,19 +1,23 @@
 import { calc_frets, display_fret } from "../utils/FretCalc";
 import { noteColor, getColorForChord } from '../utils/ColorSelect';
 
-
 export default function Fretboard({
-  width = 420,
-  height = 250,
-  numFrets,
-  numStrings,
+  width = "100%",
+  height = "100%",
+  maxWidth = 420,
+  maxHeight = 250,
+  numFrets = 24,
+  numStrings = 6,
   tuning = [],
   fingerPositions = [],
 }) {
-  const spacingX = width / numFrets;
-  const spacingY = height / (numStrings - 1);
+  // Use pixel values for calculations
+  const pixelWidth = typeof width === 'number' ? width : maxWidth;
+  const pixelHeight = typeof height === 'number' ? height : maxHeight;
   
-
+  const spacingX = pixelWidth / numFrets;
+  const spacingY = pixelHeight / (numStrings - 1);
+  
   const lines = [
     ...Array.from({ length: numStrings }).map((_, i) => (
       <line
@@ -50,12 +54,10 @@ export default function Fretboard({
           width={30}
           height={30}
           fill="rgb(254, 202, 202)"
-          rx = "4" 
+          rx="4" 
         />)
-      } else if (pos === 0) {
-        const fretNum = 0;
-        return (''
-        );
+    } else if (pos === 0) {
+      return '';
     } else {
       const fretNum = parseInt(pos, 10);
       if (isNaN(fretNum)) return null;
@@ -72,8 +74,15 @@ export default function Fretboard({
   });
 
   return (
-    <div className="Fretboard w-full max-w-2xl aspect-[1.6] max-h-[320px] flex justify-center items-center">
-      <div className="relative" style={{ width: `${width}px`, height: `${height}px` }}>
+    <div 
+      className="Fretboard w-full h-full flex justify-center items-center"
+      style={{
+        maxWidth: `${maxWidth}px`,
+        maxHeight: `${maxHeight}px`,
+        aspectRatio: `${maxWidth / maxHeight}`
+      }}
+    >
+      <div className="relative w-full h-full">
         <div className="TuningDisplay absolute left-0 top-0 z-10 h-full w-[30px]">
           {tuning.map((label, i) => (
             <div
@@ -81,7 +90,7 @@ export default function Fretboard({
               className="text-black text-2xl font-sans font-extralight text-right -translate-x-14"
               style={{
                 position: 'absolute',
-                top: `${i * spacingY}px`,
+                top: `${(i * spacingY / pixelHeight) * 100}%`,
                 transform: 'translateY(-50%)',
                 width: '100%',
               }}
@@ -89,23 +98,22 @@ export default function Fretboard({
               {label}
             </div>
           ))}
-            <div
-              className={`FretDisplay text-black text-2xl font-sans font-extralight text-center -translate-y-14`}
-              style={{
-                position: 'absolute',
-                left: `${spacingX / 2}px`, // Center over first fret
-                transform: 'translateX(-50%)', // Center the text
-              }}
-            >
+          <div
+            className="FretDisplay text-black text-2xl font-sans font-extralight text-center -translate-y-14"
+            style={{
+              position: 'absolute',
+              left: `${(spacingX / 2 / pixelWidth) * 100}%`,
+              transform: 'translateX(-50%)',
+            }}
+          >
             {display_fret(fingerPositions)}
-            </div>
+          </div>
         </div>
 
         <svg
-          className="absolute top-0"
-          viewBox={`0 0 ${width} ${height}`}
-          width={width}
-          height={height}
+          className="absolute top-0 w-full h-full"
+          viewBox={`0 0 ${pixelWidth} ${pixelHeight}`}
+          preserveAspectRatio="xMidYMid meet"
           overflow="visible"
         >
           {lines}

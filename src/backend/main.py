@@ -8,7 +8,7 @@ app = FastAPI()
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with ["http://yourfrontend.com"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -19,6 +19,7 @@ class ChordRequest(BaseModel):
     root: str
     modifier: str
     fret: int
+    tuning: list[str] # Default to standard tuning
 
 # Support POST and OPTIONS (CORS preflight)
 @app.api_route("/api/fing", methods=["POST", "OPTIONS"])
@@ -26,10 +27,12 @@ async def get_fing(data: ChordRequest, request: Request):
     if request.method == "OPTIONS":
         return {}  # FastAPI handles preflight headers via CORSMiddleware
 
-    # tuning = ["E", "A", "D", "G", "B", "E"]
-    tuning = ["E", "B", "G", "D", "A", "E"]
+    # Use the tuning from the request, or default if not provided
+    tuning = data.tuning if data.tuning else ["E", "A", "D", "G", "B", "E"]
     notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
     frets = 24
+
+    print(f"Using tuning: {tuning}")  # Debug print
 
     g = Guitar(tuning, notes, frets, data.fret, data.root, data.modifier)
     g.fret_guess = data.fret
@@ -40,6 +43,6 @@ async def get_fing(data: ChordRequest, request: Request):
     frets_only = {key: value['fret'] for key, value in g.FING.items()}
     fing_list = list(frets_only.values())
     
-    print(f"Calculated Fret Positions: {fing_list}")
+    print(f"Calculated Fret Positions: {fing_list} with tuning: {tuning}")
 
     return {"fing": fing_list}
