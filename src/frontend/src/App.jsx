@@ -6,7 +6,7 @@ import sendDataToBackend from './api/sendDataToBackend';
 import './App.css';
 
 let selectedColor = 'bg-red-200'
-let tuning = ['E', 'A', 'D', 'G', 'B', 'E'];
+let tuning = ['E', 'A', 'D', 'G', 'B', 'E'].reverse();
 
 const ChordBox = ({ chord, size = 'h-full w-full', fontsize = 'text-3lg', color = selectedColor, isSquare = true }) => (
   <div
@@ -48,11 +48,11 @@ const App = () => {
           <div className="Fretboard flex justify-center shrink w-full h-auto items-center">
             <Fretboard
               width={420}
-              height={320}
+              height={250}
               numFrets={4}
               numStrings={6}
               tuning={tuning}
-              fingerPositions={fingerPositions} // Pass updated finger positions
+              fingerPositions={fingerPositions}
             />
           </div>
           <div className='Generation flex flex-col shrink justify-center items-center h-auto w-full mt-6'>

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import sendDataToBackend from '../api/sendDataToBackend';
+import { noteColor, getColorForChord } from '../utils/ColorSelect';
 
 const roots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const modifiers = ['maj', 'min', '7', 'maj7', 'sus4', 'dim', 'aug'];
@@ -22,7 +23,7 @@ const ChordSelector = ({ onSelect }) => {
       }
     };
     fetchAndSendPositions();
-  }, [root, modifier, fret, onSelect]);
+  }, [root, modifier, fret]);
 
   // Handle click outside to just close the selector
   useEffect(() => {

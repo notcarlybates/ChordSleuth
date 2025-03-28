@@ -26,7 +26,8 @@ async def get_fing(data: ChordRequest, request: Request):
     if request.method == "OPTIONS":
         return {}  # FastAPI handles preflight headers via CORSMiddleware
 
-    tuning = ["E", "A", "D", "G", "B", "E"]
+    # tuning = ["E", "A", "D", "G", "B", "E"]
+    tuning = ["E", "B", "G", "D", "A", "E"]
     notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"]
     frets = 24
 

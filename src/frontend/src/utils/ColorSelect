@@ -1,0 +1,44 @@
+// src/utils/ColorSelect.js
+export const noteColor = (note, variant = 'primary') => {
+    const colorMap = {
+      'A': 'red',
+      'A#': 'orange',
+      'Bb': 'orange',
+      'B': 'amber',
+      'C': 'yellow',
+      'C#': 'lime',
+      'Db': 'lime',
+      'D': 'green',
+      'D#': 'emerald',
+      'Eb': 'emerald',
+      'E': 'teal',
+      'F': 'cyan',
+      'F#': 'sky',
+      'Gb': 'sky',
+      'G': 'blue',
+      'G#': 'indigo',
+      'Ab': 'indigo'
+    };
+  
+    const variantMap = {
+      'secondary': '50',
+      'primary': '100',
+      'hover': '200'
+    };
+  
+    const normalizedNote = note?.length >= 2 && note[1] === 'b' 
+      ? `${String.fromCharCode(note.charCodeAt(0) - 1)}#`
+      : note;
+  
+    if (!normalizedNote || !(normalizedNote in colorMap)) {
+      return `bg-purple-${variantMap[variant] || '100'}`;
+    }
+  
+    return `bg-${colorMap[normalizedNote]}-${variantMap[variant]}`;
+  };
+  
+  export const getColorForChord = (root, variant = 'primary') => {
+    // Extract the base note (handle chords like 'C#m7')
+    const baseNote = root?.replace(/[^A-G#b]/g, '');
+    return noteColor(baseNote, variant);
+  };
