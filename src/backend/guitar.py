@@ -1,34 +1,22 @@
 from chordInterpreter import Chord
+from itertools import product
 
 class Guitar:
-
-    '''Hey, you!
-
-        Yeah, you! The one reading this!
-
-        Are you good at software development?
-
-        Yeah, well I am too! I SWEAR!!!
-
-        Don't look too closely at this current setup.
-        It works for now, but I have some technical debt to repay.
-
-        Refactoring comes early April. Stay tuned.
-    '''
-
     def __init__(self, tuning, notes, frets, fret_guess, root, mod):
-
         self.tuning = tuning
         self.notes = notes
         self.frets = frets
         self.fret_guess = fret_guess
         self.chord = Chord(root, mod)
         self.mod = mod
+        self.root = root
         self.note_names = self.chord.calc_notes()
         self.fretboard = self.assemble_neck()
         self.sliced_fretboard = self.find_range()
         self.note_matches = self.find_match(self.note_names)
         self.FING = self.closest_notes()
+        self.validate_fingering()
+        self.ensure_root_note()
 
     def make_string(self, root_note):
         string = []
@@ -47,14 +35,14 @@ class Guitar:
         return neck
 
     def find_range(self):
-        min_fret = max(self.fret_guess - 4, 0)
-        max_fret = min(self.fret_guess + 4, self.frets)
+        min_fret = max(self.fret_guess - 2, 0)
+        max_fret = min(self.fret_guess + 2, self.frets)
 
         fret_range = {
-            string: {fret: note for fret, note in frets.items() if min_fret <= fret <= max_fret or fret == 0}
+            string: {fret: note for fret, note in frets.items() 
+                    if (min_fret <= fret <= max_fret) or fret == 0}
             for string, frets in self.fretboard.items()
         }
-
         return fret_range
 
     def find_match(self, note_names):
@@ -66,39 +54,250 @@ class Guitar:
         return out_chord
     
     def closest_notes(self):
-        notes = self.note_matches.items()
-        DP = {string: {} for string, _ in notes}
-        min_fret, max_fret = self.fret_guess, self.fret_guess
-
-        for string, fret_data in notes:
+        """Find the optimal fingering for the chord"""
+        # First pass: Find all possible note options for each string
+        note_options = {}
+        for string in range(0, len(self.tuning)):  # Process from thickest to thinnest (reverse order)
+            fret_data = self.note_matches[string]
+            options = []
             for fret, note in fret_data.items():
-                cost = abs(fret - self.fret_guess) if fret != 0 else 0
-                DP[string][fret] = {
+                cost = abs(fret - self.fret_guess) if fret != 0 else -1
+                options.append({
+                    'fret': fret,
                     'note': note,
-                    'cost': cost
-                }
+                    'cost': cost,
+                    'is_open': fret == 0,
+                    'is_muted': False,
+                    'string': string
+                })
+            # Add muted string option
+            options.append({
+                'fret': 'x',
+                'note': None,
+                'cost': 0,
+                'is_open': False,
+                'is_muted': True,
+                'string': string
+            })
+            note_options[string] = sorted(options, key=lambda x: x['cost'])
 
+        # Find the lowest string (thickest) that can play the root note
+        root_note = self.chord.root
+        root_string_options = []
+        for string in range(0, len(self.tuning)):  # Check from thickest to thinnest
+            for option in note_options[string]:
+                if option['note'] == root_note and not option['is_muted']:
+                    root_string_options.append((string, option))
+                    break
+
+        if not root_string_options:
+            return self.fallback_solution(note_options)
+
+        best_solution = None
+        best_score = float('inf')
+        required_notes = set(self.note_names)
+
+        # Try each possible root string position from thickest to thinnest
+        for root_string, root_option in sorted(root_string_options, key=lambda x: x[0]):
+            # Strings thinner than root must be muted
+            strings_thinner = [s for s in note_options.keys() if s < root_string]
+            # Strings thicker than root can be played
+            strings_thicker = [s for s in note_options.keys() if s > root_string]
+            
+            # Generate possible combinations for strings thicker than root
+            thicker_options = [note_options[s] for s in strings_thicker]
+            possible_thicker_combinations = product(*thicker_options) if thicker_options else [[]]
+            
+            for thicker_combo in possible_thicker_combinations:
+                # Build full candidate solution
+                candidate = []
+                
+                # Add muted strings thinner than root (higher pitches)
+                for s in strings_thinner:
+                    candidate.append({
+                        'fret': 'x',
+                        'note': None,
+                        'cost': 0,
+                        'is_open': False,
+                        'is_muted': True,
+                        'string': s
+                    })
+                
+                # Add root string
+                candidate.append(root_option)
+                
+                # Add strings thicker than root
+                candidate.extend(thicker_combo)
+                
+                # Check if all required notes are present
+                played_notes = {opt['note'] for opt in candidate if not opt['is_muted']}
+                if not required_notes.issubset(played_notes):
+                    continue
+                
+                # Calculate score
+                score = self.calculate_solution_score(candidate)
+                
+                if score < best_score:
+                    best_score = score
+                    best_solution = candidate
+
+        if not best_solution:
+            return self.fallback_solution(note_options)
+            
+        # Convert to output format (maintaining original string order)
         selected = {}
-
-        for string, fret_data in DP.items():
-            best_choice = None
-            for fret, data in fret_data.items():
-                if fret != 0:
-                    min_fret, max_fret = min(min_fret, fret), max(max_fret, fret)
-                if best_choice is None or (data['cost'] < 4 and data['cost'] < best_choice['cost']):
-                    best_choice = {'fret': fret, 'note': data['note'], 'cost': data['cost']}
-
-            selected[string] = best_choice if best_choice else 'null'
-
+        for opt in best_solution:
+            selected[opt['string']] = {
+                'fret': opt['fret'],
+                'note': opt['note'],
+                'cost': opt['cost']
+            }
+            
         return selected
 
+    def calculate_solution_score(self, solution):
+        """Calculate a score for a potential solution considering various factors"""
+        frets_used = []
+        fingers_used = 0
+        open_count = 0
+        mute_count = 0
+        total_cost = 0
+        
+        for opt in solution:
+            if opt['is_muted']:
+                mute_count += 1
+            elif opt['is_open']:
+                open_count += 1
+                total_cost += opt['cost']
+            else:
+                frets_used.append(opt['fret'])
+                fingers_used += 1
+                total_cost += opt['cost']
+        
+        # Rule penalties
+        penalties = 0
+        
+        # 1. Check fret span
+        if frets_used:
+            fret_span = max(frets_used) - min(frets_used)
+            if fret_span > 4:
+                penalties += 1000  # Large penalty for breaking 4-fret rule
+            else:
+                penalties += fret_span * 2  # Smaller penalty for wider spans
+        
+        # 2. Check finger count
+        if fingers_used > 4:
+            penalties += 1000  # Large penalty for breaking 4-finger rule
+        
+        # 3. Check mute positions
+        mute_positions = [i for i, opt in enumerate(solution) if opt['is_muted']]
+        if mute_positions:
+            # Check if muted strings are contiguous and on the high end
+            if not (mute_positions == list(range(0, len(mute_positions)))):
+                penalties += 500  # Penalty for mutes not being on highest strings
+        
+        # 4. Bonus for open strings
+        open_bonus = open_count * -3  # Strong preference for open strings
+        
+        # 5. Bonus for root being on lowest string
+        if solution[-1]['note'] == self.chord.root and not solution[-1]['is_muted']:
+            open_bonus -= 2  # Small additional bonus
+        
+        return total_cost + penalties + open_bonus
 
-# # ---- Usage ----
-# notes = ["A", "As", "B", "C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs"]
-# tuning = ["E", "A", "D", "G", "B", "E"]
-# frets = 25
-# root = 'D'
-# mod = 'sus4'
+    def fallback_solution(self, note_options):
+        """Fallback solution when root note can't be placed properly"""
+        # Try to find any solution that includes all notes
+        required_notes = set(self.note_names)
+        best_solution = None
+        best_score = float('inf')
+        
+        for combo in product(*[note_options[s] for s in note_options]):
+            played_notes = {opt['note'] for opt in combo if not opt['is_muted']}
+            if required_notes.issubset(played_notes):
+                score = self.calculate_solution_score(combo)
+                if score < best_score:
+                    best_score = score
+                    best_solution = combo
+        
+        if not best_solution:
+            # Final fallback: just return the first option for each string
+            best_solution = [note_options[s][0] for s in note_options]
+        
+        selected = {}
+        for opt in best_solution:
+            selected[opt['string']] = {
+                'fret': opt['fret'],
+                'note': opt['note'],
+                'cost': opt['cost']
+            }
+        return selected
 
-# guitar = Guitar(tuning, notes, frets, root, mod)
-# print(f'\nOutput:\n{guitar.FING}\n')
+    def validate_fingering(self):
+        """Additional validation and adjustment of the fingering"""
+        root_note = self.chord.root
+        root_found = False
+        
+        for string in range(0, len(self.tuning)):  # Check from thickest to thinnest
+            if string not in self.FING:
+                continue
+                
+            data = self.FING[string]
+            if not isinstance(data, dict):
+                continue
+                
+            if not root_found:
+                if data.get('note') == root_note:
+                    root_found = True
+                else:
+                    # Strings thinner than root must be muted
+                    if data.get('fret') != 'x':
+                        self.FING[string] = {
+                            'fret': 'x',
+                            'note': None,
+                            'cost': 0,
+                            'is_muted': True,
+                            'is_open': False
+                        }
+            else:
+                # Strings thicker than root can be played
+                pass
+        
+        if not root_found:
+            for string in range(0, len(self.tuning)):
+                if string not in self.FING:
+                    continue
+                    
+                data = self.FING[string]
+                if isinstance(data, dict) and data.get('note') in self.note_names:
+                    # Make this the root by muting strings thinner than it
+                    for s in range(0, string):
+                        if isinstance(self.FING.get(s), dict):
+                            self.FING[s] = {
+                                'fret': 'x',
+                                'note': None,
+                                'cost': 0,
+                                'is_muted': True,
+                                'is_open': False
+                            }
+                    break
+
+    def ensure_root_note(self):
+        """Ensure the root note is included in the fingering"""
+        played_notes = {data['note'] for data in self.FING.values() 
+                       if isinstance(data, dict) and not data.get('is_muted', False)}
+        
+        if self.root not in played_notes:
+            # Find the best string to add the root note
+            for string in sorted(self.FING.keys()):
+                current = self.FING[string]
+                if isinstance(current, dict) and current.get('is_muted', False):
+                    # Try to find root note on this string
+                    for fret, note in self.note_matches[string].items():
+                        if note == self.root:
+                            self.FING[string] = {
+                                'fret': fret,
+                                'note': note,
+                                'cost': abs(fret - self.fret_guess)
+                            }
+                            return
