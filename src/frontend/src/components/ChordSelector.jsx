@@ -1,76 +1,153 @@
 import { useState, useRef, useEffect } from 'react';
 import sendDataToBackend from '../api/sendDataToBackend';
-import { noteColor, getColorForChord } from '../utils/ColorSelect';
+import { noteColor } from '../utils/ColorSelect';
 
 const roots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const modifiers = ['maj', 'min', '7', 'maj7', 'sus4', 'dim', 'aug'];
 const frets = Array.from({ length: 24 }, (_, i) => i + 1);
+const stringNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-const ChordSelector = ({ onSelect }) => {
+const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
+
+const ChordSelector = ({ onSelect, onTuningChange, currentTuning = defaultTuning, initialChord = { root: 'D', modifier: 'maj7', fret: 3 } }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [root, setRoot] = useState("D");
-  const [modifier, setModifier] = useState("maj7");
-  const [fret, setFret] = useState(3);
+  const [root, setRoot] = useState(initialChord.root);
+  const [modifier, setModifier] = useState(initialChord.modifier);
+  const [fret, setFret] = useState(initialChord.fret);
+  const [tuning, setTuning] = useState(currentTuning);
   const [activeTab, setActiveTab] = useState("root");
+  const [isTuningMode, setIsTuningMode] = useState(false);
+  const [selectedString, setSelectedString] = useState(0);
   const containerRef = useRef(null);
+  const timeoutRef = useRef(null);
+
+  // Sync local tuning with parent's currentTuning
+  useEffect(() => {
+    setTuning(currentTuning);
+  }, [currentTuning]);
 
   // Fetch and send finger positions whenever chord changes
   useEffect(() => {
     const fetchAndSendPositions = async () => {
-      const fing = await sendDataToBackend({ root, modifier, fret });
+      const fing = await sendDataToBackend({ root, modifier, fret, tuning });
       if (fing && onSelect) {
-        onSelect({ root, modifier, fret, fing });
+        onSelect({ root, modifier, fret, fing, tuning });
       }
     };
     fetchAndSendPositions();
   }, [root, modifier, fret]);
 
-  // Handle click outside to just close the selector
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Handle tuning changes
+  const handleTuningChange = (newTuning) => {
+    setTuning(newTuning);
+    if (onTuningChange) {
+      onTuningChange(newTuning);
+    }
+  };
+
+  const handleMouseEnter = () => {
+    clearTimeout(timeoutRef.current);
+    setIsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+      setIsTuningMode(false);
+    }, 0);
+  };
 
   const getActiveOptions = () => {
+    if (isTuningMode) return stringNotes;
     if (activeTab === "root") return roots;
     if (activeTab === "modifier") return modifiers;
     return frets;
   };
 
   const getValue = () => {
+    if (isTuningMode) return tuning[selectedString];
     if (activeTab === "root") return root;
     if (activeTab === "modifier") return modifier;
     return fret;
   };
 
   const setValue = (val) => {
-    if (activeTab === "root") setRoot(val);
+    if (isTuningMode) {
+      const newTuning = [...tuning];
+      newTuning[selectedString] = val;
+      handleTuningChange(newTuning);
+    } else if (activeTab === "root") setRoot(val);
     else if (activeTab === "modifier") setModifier(val);
     else setFret(val);
+  };
+
+  const resetTuning = () => {
+    handleTuningChange([...defaultTuning]);
   };
 
   return (
     <div
       ref={containerRef}
-      className={`transition-all duration-300 w-auto max-w-md rounded-lg p-7 ${
+      className={`relative transition-all duration-500 w-auto max-w-md rounded-lg p-7 ${
         isOpen ? 'bg-red-100' : 'bg-red-200 hover:bg-red-300 cursor-pointer'
       }`}
-      onClick={() => setIsOpen(true)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      {isOpen ? (
-        <div className="flex justify-between gap-4">
-          {/* Preview Section */}
-          <div className="flex flex-col items-center justify-between w-1/2">
-            <div className="text-xl font-sans font-extralight">{`${root}${modifier}`}</div>
-            <div className="text-sm font-sans font-extralight text-gray-600">Fret {fret}</div>
+      {/* Preview when closed */}
+      <div className={`transition-opacity duration-400 ${isOpen ? 'opacity-0 h-0' : 'opacity-100 h-auto'}`}>
+        <div className="text-center font-sans font-extralight text-2xl">{`${root}${modifier} (Fret ${fret})`}</div>
+      </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 mt-4">
+      {/* Expanded content */}
+      <div 
+        className={`transition-all duration-300 overflow-hidden ${
+          isOpen ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0'
+        }`}
+      >
+        <div className="flex flex-col gap-4">
+          {/* Preview Section */}
+          <div className="flex justify-between items-center">
+            <div className="flex flex-col">
+              <div className="text-xl font-sans font-extralight">{`${root}${modifier}`}</div>
+              <div className="text-sm font-sans font-extralight text-gray-600">Fret {fret}</div>
+            </div>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsTuningMode(!isTuningMode);
+                if (!isTuningMode) setActiveTab(null);
+              }}
+              className={`inline-block relative px-3 py-2 min-w-[80px] text-sm rounded font-sans font-extralight ${
+                isTuningMode ? 'bg-red-200 hover:bg-red-300' : 'bg-red-200 hover:bg-red-300'
+              }`}
+            >
+              {isTuningMode ? 'chord' : 'tuning'}
+            </button>
+          </div>
+
+          {isTuningMode ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-2">
+                {tuning.map((note, i) => (
+                  <button
+                    key={`string-select-${i}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedString(i);
+                    }}
+                    className={`px-2 py-1 text-sm font-sans font-extralight rounded ${
+                      i === selectedString ? 'bg-red-300 font-extralight' : 'hover:bg-red-100'
+                    }`}
+                  >
+                    {note}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-2">
               {["root", "modifier", "fret"].map((tab) => (
                 <button
                   key={tab}
@@ -78,18 +155,18 @@ const ChordSelector = ({ onSelect }) => {
                     e.stopPropagation();
                     setActiveTab(tab);
                   }}
-                  className={`px-2 pr- py-1 text-sm font-sans font-extralight rounded ${
-                    tab === activeTab ? 'bg-red-200 font-extralight' : 'hover:bg-red-100'
+                  className={`px-2 py-1 text-sm font-sans font-extralight rounded ${
+                    tab === activeTab ? 'bg-red-300 font-extralight' : 'hover:bg-red-100'
                   }`}
                 >
                   {tab}
                 </button>
               ))}
             </div>
-          </div>
+          )}
 
           {/* Scroll-Wheel Section */}
-          <div className="w-1/2 max-h-40 overflow-y-scroll bg-red-100 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 rounded  px-5 py-1">
+          <div className="max-h-40 overflow-y-scroll bg-red-200 scrollbar-thin scrollbar-thumb-red-300 scrollbar-track-red-400 rounded px-5 py-1">
             {getActiveOptions().map((opt) => (
               <div
                 key={opt}
@@ -98,7 +175,7 @@ const ChordSelector = ({ onSelect }) => {
                   setValue(opt);
                 }}
                 className={`cursor-pointer px-5 py-1 font-sans font-extralight rounded text-sm text-center ${
-                  getValue() === opt ? 'bg-red-200 font-extralight' : 'hover:bg-red-50'
+                  getValue() === opt ? 'bg-red-300 font-extralight' : 'hover:bg-red-100'
                 }`}
               >
                 {opt}
@@ -106,9 +183,7 @@ const ChordSelector = ({ onSelect }) => {
             ))}
           </div>
         </div>
-      ) : (
-        <div className="text-center font-sans font-extralight text-xl">{`${root}${modifier} (Fret ${fret})`}</div>
-      )}
+      </div>
     </div>
   );
 };
