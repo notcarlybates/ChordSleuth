@@ -65,9 +65,27 @@ const App = () => {
 
   return (
     <div className="WholePageContainer w-dvw h-dvh items-center align-center shrink">
-      <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-3/4 h-dvh">
-        <header className="Title font-sans mt-8 font-bold text-5xl">chord sleuth</header>
-        <div className="MainBox h-full w-full shrink flex flex-col justify-evenly items-center mt-8">
+  <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-3/4 h-dvh">
+    <header className="Title font-sans ml-4 mt-8 font-bold text-5xl relative">
+      chord sleuth
+      <svg 
+        className="ransform translate-x-12 -translate-y-10" 
+        width="40" 
+        height="40"
+        style={{
+          left: 'calc(50% + 2.5rem)', // Adjust this value to position over the "O"
+          top: '50%'
+        }}
+      >
+        <circle
+          cx="20"
+          cy="20"
+          r="15"
+          fill="rgb(254, 202, 202)"
+        />
+      </svg>
+    </header>
+    <div className="MainBox h-full w-full shrink flex flex-col justify-evenly items-center mt-8">
   {/* ChordSelect remains the same */}
   <div className="ChordSelect flex w-full h-auto justify-center mb-6">
     <ChordSelector 
@@ -93,7 +111,7 @@ const App = () => {
       />
     </div>
     
-    <div className='Generation flex-none w-full flex flex-col justify-center items-center mt-4'>
+    <div className='Generation flex-none w-full flex flex-col justify-center items-center mt-4 mb-10'>
       <ChordBox
         chord="regenerate"
         isSquare={false}

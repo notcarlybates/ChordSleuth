@@ -1,5 +1,4 @@
 import { calc_frets, display_fret } from "../utils/FretCalc";
-import { noteColor, getColorForChord } from '../utils/ColorSelect';
 
 export default function Fretboard({
   width = "100%",
@@ -11,6 +10,10 @@ export default function Fretboard({
   tuning = [],
   fingerPositions = [],
 }) {
+  // Reverse the tuning and finger positions to match standard guitar order (low E to high E)
+  const reversedTuning = [...tuning].reverse();
+  const reversedFingerPositions = [...fingerPositions].reverse();
+
   // Use pixel values for calculations
   const pixelWidth = typeof width === 'number' ? width : maxWidth;
   const pixelHeight = typeof height === 'number' ? height : maxHeight;
@@ -43,7 +46,7 @@ export default function Fretboard({
     )),
   ];
 
-  const markers = calc_frets(fingerPositions).map((pos, stringIndex) => {
+  const markers = calc_frets(reversedFingerPositions).map((pos, stringIndex) => {
     if (pos === 'x') {
       const fretNum = 0;
       return (
@@ -84,7 +87,7 @@ export default function Fretboard({
     >
       <div className="relative w-full h-full">
         <div className="TuningDisplay absolute left-0 top-0 z-10 h-full w-[30px]">
-          {tuning.map((label, i) => (
+          {reversedTuning.map((label, i) => (
             <div
               key={`label-${i}`}
               className="text-black text-2xl font-sans font-extralight text-right -translate-x-14"
@@ -106,7 +109,7 @@ export default function Fretboard({
               transform: 'translateX(-50%)',
             }}
           >
-            {display_fret(fingerPositions)}
+            {display_fret(reversedFingerPositions)}
           </div>
         </div>
 
