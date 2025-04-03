@@ -1,6 +1,7 @@
 from chordInterpreter import Chord
 from itertools import product
 
+
 class Guitar:
     def __init__(self, tuning, notes, frets, fret_guess, root, mod):
         self.tuning = tuning
