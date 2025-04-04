@@ -19,11 +19,17 @@ app.add_middleware(
 )
 
 # Load the trained model and vocabulary
-model = load_model('../../data/PROG/best_model.keras')
 with open('../../data/PROG/chord_vocab.json') as f:
     vocab_data = json.load(f)
     chord_to_int = vocab_data['chord_to_int']
-    int_to_chord = vocab_data['int_to_chord']
+    # Convert string keys back to integers
+    int_to_chord = {int(k): v for k, v in vocab_data['int_to_chord'].items()}
+    
+model_path = '../../data/PROG/best_model.keras'
+if os.path.exists(model_path):
+    model = load_model(model_path)
+else:
+    model = None
 
 # Define request bodies
 class ChordRequest(BaseModel):
