@@ -19,13 +19,13 @@ app.add_middleware(
 )
 
 # Load the trained model and vocabulary
-with open('../../data/PROG/chord_vocab.json') as f:
+with open('../../data/PROG/vis_chord_vocab.json') as f:
     vocab_data = json.load(f)
-    chord_to_int = vocab_data['chord_to_int']
+    chord_to_int = vocab_data['chord_to_idx']
     # Convert string keys back to integers
-    int_to_chord = {int(k): v for k, v in vocab_data['int_to_chord'].items()}
+    int_to_chord = {int(k): v for k, v in vocab_data['idx_to_chord'].items()}
     
-model_path = '../../data/PROG/best_model.keras'
+model_path = '../../data/PROG/model.keras'
 if os.path.exists(model_path):
     model = load_model(model_path)
 else:
