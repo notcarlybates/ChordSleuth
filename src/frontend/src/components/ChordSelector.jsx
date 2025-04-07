@@ -1,17 +1,23 @@
+// ChordSelector.jsx
 import { useState, useRef, useEffect } from 'react';
 import sendDataToBackend from '../api/sendDataToBackend';
 
 const roots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const modifiers = ['maj', 'min', '7', 'maj7', 'sus4', 'dim', 'aug'];
+const modifiers = [
+  'maj', 'min', '7', 'maj7', 'min7', 'dim', 'sus4', 
+  '6', '9', 'min9', 'maj9', '13'
+];
 const frets = Array.from({ length: 24 }, (_, i) => i + 1);
 const stringNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
 const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
-// const defaultTuning = ['E', 'B', 'D', 'G', 'B', 'E'];
 
-
-
-const ChordSelector = ({ onSelect, onTuningChange, currentTuning = defaultTuning, initialChord = { root: 'D', modifier: 'maj7', fret: 3 } }) => {
+const ChordSelector = ({ 
+  onSelect, 
+  onTuningChange, 
+  currentTuning = defaultTuning, 
+  initialChord = { root: 'D', modifier: 'maj7', fret: 3 },
+  selectedChord 
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [root, setRoot] = useState(initialChord.root);
   const [modifier, setModifier] = useState(initialChord.modifier);
@@ -22,6 +28,19 @@ const ChordSelector = ({ onSelect, onTuningChange, currentTuning = defaultTuning
   const [selectedString, setSelectedString] = useState(0);
   const containerRef = useRef(null);
   const timeoutRef = useRef(null);
+
+  // Sync with selected chord from progression
+  useEffect(() => {
+    if (selectedChord) {
+      const rootMatch = selectedChord.match(/^[A-G][#b]?/);
+      const modifierMatch = selectedChord.match(/[^A-G#b].*/);
+      
+      if (rootMatch && modifierMatch) {
+        setRoot(rootMatch[0]);
+        setModifier(modifierMatch[0]);
+      }
+    }
+  }, [selectedChord]);
 
   // Sync local tuning with parent's currentTuning
   useEffect(() => {
@@ -39,7 +58,6 @@ const ChordSelector = ({ onSelect, onTuningChange, currentTuning = defaultTuning
     fetchAndSendPositions();
   }, [root, modifier, fret]);
 
-  // Handle tuning changes
   const handleTuningChange = (newTuning) => {
     setTuning(newTuning);
     if (onTuningChange) {
