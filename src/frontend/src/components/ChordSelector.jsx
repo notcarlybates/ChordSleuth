@@ -29,15 +29,37 @@ const ChordSelector = ({
   const containerRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  // Sync with selected chord from progression
   useEffect(() => {
     if (selectedChord) {
-      const rootMatch = selectedChord.match(/^[A-G][#b]?/);
-      const modifierMatch = selectedChord.match(/[^A-G#b].*/);
-      
-      if (rootMatch && modifierMatch) {
-        setRoot(rootMatch[0]);
-        setModifier(modifierMatch[0]);
+      // Case-insensitive match but preserve original casing
+      const fullMatch = selectedChord.match(/^([A-G][#b]?)(.*)/i);
+      if (fullMatch) {
+        const [, matchedRoot, matchedModifier] = fullMatch;
+        // Find the original casing from our modifiers array
+        const originalModifier = modifiers.find(m => 
+          m.toLowerCase() === matchedModifier.trim().toLowerCase()
+        ) || matchedModifier.trim() || 'maj';
+        
+        setRoot(matchedRoot);
+        setModifier(originalModifier);
+        
+        // Trigger chord selection update
+        sendDataToBackend({ 
+          root: matchedRoot, 
+          modifier: originalModifier, 
+          fret, 
+          tuning 
+        }).then(fing => {
+          if (fing && onSelect) {
+            onSelect({ 
+              root: matchedRoot, 
+              modifier: originalModifier, 
+              fret, 
+              fing, 
+              tuning 
+            });
+          }
+        });
       }
     }
   }, [selectedChord]);
@@ -91,14 +113,35 @@ const ChordSelector = ({
     return fret;
   };
 
+  
+
   const setValue = (val) => {
     if (isTuningMode) {
-      const newTuning = [...tuning];
-      newTuning[selectedString] = val;
-      handleTuningChange(newTuning);
-    } else if (activeTab === "root") setRoot(val);
-    else if (activeTab === "modifier") setModifier(val);
-    else setFret(val);
+      // ... tuning handling remains the same
+    } else {
+      if (activeTab === "root") setRoot(val);
+      else if (activeTab === "modifier") setModifier(val);
+      else setFret(val);
+      
+      // Immediately report chord change
+      const chord = `${activeTab === "root" ? val : root}${activeTab === "modifier" ? val : modifier}`;
+      if (onSelect) {
+        sendDataToBackend({ 
+          root: activeTab === "root" ? val : root,
+          modifier: activeTab === "modifier" ? val : modifier,
+          fret,
+          tuning 
+        }).then(fing => {
+          onSelect({
+            root: activeTab === "root" ? val : root,
+            modifier: activeTab === "modifier" ? val : modifier,
+            fret,
+            fing,
+            tuning
+          });
+        });
+      }
+    }
   };
 
   const resetTuning = () => {

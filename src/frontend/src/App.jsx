@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
 import sendDataToBackend from './api/sendDataToBackend';
@@ -7,44 +7,41 @@ import './App.css';
 
 const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 
-const ChordBox = ({ chord, size = 'h-full w-full', fontsize = 'text-3lg', color = 'bg-red-200', isSquare = true, onClick, isSelected = false }) => {
-  // Map original colors to their 300-level variants
-  const colorMap = {
-    'bg-red-200': 'bg-red-300',
-    'bg-green-200': 'bg-green-300',
-    'bg-sky-200': 'bg-sky-300',
-    'bg-fuchsia-200': 'bg-fuchsia-300',
-  };
+const ChordBox = ({ chord, size = 'h-full w-full', fontsize = 'text-3lg', color = 'bg-red-200', isSquare = true, onClick, isSelected = false }) => (
+  <div
+    className={`mx-5 flex items-center justify-center rounded-lg shrink font-thin font-sans text-2xl ${fontsize} ${size} ${color} ${
+      isSquare ? 'aspect-square' : ''
+    } ${onClick ? 'cursor-pointer hover:opacity-80 transition' : ''} ${
+      isSelected ? 'bg-purple-300' : '' // Changed to purple-300
+    }`}
+    onClick={onClick}
+  >
+    {chord}
+  </div>
+);
 
-  const selectedColor = colorMap[color] || 'bg-sky-300'; // Fallback if color not mapped
+const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
+  const displayChords = [...chords];
+  while (displayChords.length < 4) {
+    displayChords.push('');
+  }
 
   return (
-    <div
-      className={`mx-5 flex items-center justify-center rounded-lg shrink font-thin font-sans text-2xl ${fontsize} ${size} ${
-        isSelected ? selectedColor : color
-      } ${
-        isSquare ? 'aspect-square' : ''
-      } ${onClick ? 'cursor-pointer hover:opacity-80 transition' : ''}`}
-      onClick={onClick}
-    >
-      {chord}
+    <div className="ChordDisplay flex items-center justify-center font-light shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-4 md:w-5/6 lg:mx-5 lg:w-3/4">
+      {displayChords.map((chord, index) => (
+        <ChordBox 
+          key={index} 
+          chord={chord || ' '}
+          color={chord ? 
+            (index === 0 ? 'bg-red-200' : ['bg-green-200', 'bg-sky-200', 'bg-fuchsia-200'][index - 1]) 
+            : 'bg-gray-200'}
+          onClick={() => chord && onChordClick(chord, index)}
+          isSelected={index === selectedChordIndex && !!chord}
+        />
+      ))}
     </div>
   );
 };
-
-const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => (
-  <div className="ChordDisplay flex items-center justify-center font-light shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-4 md:w-5/6 lg:mx-5 lg:w-3/4">
-    {chords.map((chord, index) => (
-      <ChordBox 
-        key={index} 
-        chord={chord} 
-        color={index === 0 ? 'bg-red-200' : ['bg-green-200', 'bg-sky-200', 'bg-fuchsia-200'][index - 1]}
-        onClick={() => onChordClick(chord, index)}
-        isSelected={index === selectedChordIndex}
-      />
-    ))}
-  </div>
-);
 
 const App = () => {
   const [fingerPositions, setFingerPositions] = useState([]);
@@ -54,12 +51,45 @@ const App = () => {
     modifier: 'maj7',
     fret: 3
   });
-  const [progression, setProgression] = useState(['Cmaj', 'F', 'G', 'Am']);
+  const [progression, setProgression] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedChord, setSelectedChord] = useState(null);
-  const [selectedChordIndex, setSelectedChordIndex] = useState(null); // Track selected chord index
+  const [selectedChordIndex, setSelectedChordIndex] = useState(0);
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const [progressionData, setProgressionData] = useState(null);
+  const [currentChord, setCurrentChord] = useState('');
+
+  const normalizeChordName = (chord) => {
+    if (!chord) return '';
+    return chord.replace(/\s+/g, '').toUpperCase();
+  };
+
+  const rotateArray = (arr, n) => {
+    const len = arr.length;
+    n = n % len;
+    return arr.slice(n).concat(arr.slice(0, n));
+  };
+
+  useEffect(() => {
+    if (hasGenerated && currentChord && progressionData) {
+      const normalizedCurrent = normalizeChordName(currentChord);
+      const normalizedStarting = normalizeChordName(progressionData.starting_chord);
+      const inSequence = progressionData.full_sequence.some(
+        chord => normalizeChordName(chord) === normalizedCurrent
+      );
+
+      if (normalizedCurrent !== normalizedStarting && !inSequence) {
+        setProgression([]);
+        setHasGenerated(false);
+        setProgressionData(null);
+        setSelectedChordIndex(0);
+      }
+    }
+  }, [currentChord]);
 
   const handleChordSelect = async ({ root, modifier, fret, tuning: newTuning }) => {
+    const chord = `${root}${modifier}`;
+    setCurrentChord(chord);
     try {
       const fing = await sendDataToBackend({ 
         root, 
@@ -85,28 +115,25 @@ const App = () => {
       const result = await sendProgressionRequest({ starting_chord: startingChord });
       
       if (result?.full_sequence) {
-        let newProgression = result.full_sequence;
+        let newProgression = [...result.full_sequence];
         
-        // Check if the selected chord exists in the progression
-        if (selectedChord && !newProgression.includes(selectedChord)) {
-          // If the selected chord is not in the progression, reset the progression state
-          setProgression([]);
-        } else {
-          // If a chord was selected, we keep its position in the progression
-          if (selectedChordIndex !== null && selectedChord) {
-            const selectedChordInProgression = progression[selectedChordIndex];
-            const selectedIndex = newProgression.indexOf(selectedChordInProgression);
-            
-            // Ensure the selected chord stays in its previous position
-            if (selectedIndex !== selectedChordIndex) {
-              const temp = newProgression[selectedChordIndex];
-              newProgression[selectedChordIndex] = selectedChordInProgression;
-              newProgression[selectedIndex] = temp;
+        if (selectedChordIndex !== null && selectedChordIndex !== 0) {
+          const selectedInNewProg = newProgression.findIndex(
+            chord => normalizeChordName(chord) === normalizeChordName(currentChord)
+          );
+          
+          if (selectedInNewProg !== -1) {
+            const rotationAmount = selectedChordIndex - selectedInNewProg;
+            if (rotationAmount !== 0) {
+              newProgression = rotateArray(newProgression, rotationAmount);
             }
           }
-
-          setProgression(newProgression);
         }
+        
+        setProgression(newProgression);
+        setProgressionData({...result, full_sequence: newProgression});
+        setHasGenerated(true);
+        setCurrentChord(startingChord);
       }
     } catch (error) {
       console.error('Error generating progression:', error);
@@ -126,10 +153,10 @@ const App = () => {
   };
 
   const handleChordClick = (chord, index) => {
-    setSelectedChord(chord);
-    setSelectedChordIndex(index); // Store the selected chord index
+    const normalizedChord = normalizeChordName(chord);
+    setSelectedChord(normalizedChord);
+    setSelectedChordIndex(index);
 
-    // Parse the clicked chord and update the selector
     const rootMatch = chord.match(/^[A-G][#b]?/);
     const modifierMatch = chord.match(/[^A-G#b].*/);
     
@@ -143,7 +170,6 @@ const App = () => {
         modifier: newModifier
       }));
       
-      // Trigger chord selection update
       handleChordSelect({ 
         root: newRoot, 
         modifier: newModifier, 
@@ -209,11 +235,13 @@ const App = () => {
                 color="bg-red-200 hover:bg-red-300 transition"
                 onClick={handleGenerateProgression}
               />
-              <ChordDisplay 
-                chords={progression} 
-                onChordClick={handleChordClick}
-                selectedChordIndex={selectedChordIndex} // Pass the selected index
-              />
+              {hasGenerated && progression.length > 0 && (
+                <ChordDisplay 
+                  chords={progression} 
+                  onChordClick={handleChordClick}
+                  selectedChordIndex={selectedChordIndex}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -222,4 +250,4 @@ const App = () => {
   );
 };
 
-export default App
+export default App;
