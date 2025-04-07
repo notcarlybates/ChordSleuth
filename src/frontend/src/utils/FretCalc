@@ -1,18 +1,28 @@
 export const calc_frets = (frets) => {
-    const playableFrets = frets.filter(f => f !== 0 && f !== 'x' && typeof f === 'number');
-    if (playableFrets.length === 0) return frets.map(f => f === 0 ? 'O' : f);
+    // First handle simple cases where we don't need normalization
+    const allNumbers = frets.filter(f => typeof f === 'number');
+    if (allNumbers.length === 0) return frets.map(f => f === 0 ? 'O' : f);
     
-    const minFret = Math.min(...playableFrets);
-    const maxFret = Math.max(...playableFrets);
+    const minFret = Math.min(...allNumbers.filter(f => f > 0)); // ignore 0s for min calculation
+    const maxFret = Math.max(...allNumbers);
     
+    // Don't normalize if minFret is already <= 4
+    if (minFret <= 4) {
+        return frets.map(f => {
+            if (f === 0) return 'O';
+            if (f === 'x') return 'x';
+            return f;
+        });
+    }
+    
+    // Only normalize if minFret > 4
     return frets.map(f => {
-      if (f === 0) return 'O';
-      if (f === 'x') return 'x';
-      
-      const normalizedFret = f - minFret + 1; // +1 to make fret numbers start at 1
-      return normalizedFret >= 5 ? 'x' : normalizedFret;
+        if (f === 0) return 'O';
+        if (f === 'x') return 'x';
+        const normalizedFret = f - minFret + 1;
+        return normalizedFret >= 5 ? 'x' : normalizedFret;
     });
-  };
+};
   
   export const display_fret = (positions) => {
     if (!positions || positions.length === 0) return '';
