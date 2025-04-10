@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
 import sendDataToBackend from './api/sendDataToBackend';
@@ -7,17 +8,28 @@ import './App.css';
 
 const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 
-const ChordBox = ({ chord, size = 'h-full w-full', fontsize = 'text-3lg', color = 'bg-red-200', isSquare = true, onClick, isSelected = false }) => (
-  <div
-    className={`mx-5 flex items-center justify-center rounded-lg shrink font-thin font-sans text-2xl ${fontsize} ${size} ${color} ${
+const ChordBox = ({
+  chord,
+  size = 'h-full w-full',
+  fontsize = 'text-2xl',
+  color = 'bg-red-200',
+  isSquare = true,
+  onClick,
+  isSelected = false
+}) => (
+  <motion.div
+    className={`mx-5 flex items-center justify-center rounded-lg shrink font-sans ${fontsize} ${size} ${color} ${
       isSquare ? 'aspect-square' : ''
     } ${onClick ? 'cursor-pointer hover:opacity-80 transition' : ''} ${
       isSelected ? 'bg-purple-300' : '' // Changed to purple-300
     }`}
     onClick={onClick}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.3 }}
   >
     {chord}
-  </div>
+  </motion.div>
 );
 
 const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
@@ -27,19 +39,28 @@ const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
   }
 
   return (
-    <div className="ChordDisplay flex items-center justify-center font-light shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-4 md:w-5/6 lg:mx-5 lg:w-3/4">
+    <motion.div
+      className="ChordDisplay flex items-center justify-center font-thin shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-4 md:w-5/6 lg:mx-5 lg:w-3/4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+    >
       {displayChords.map((chord, index) => (
-        <ChordBox 
-          key={index} 
+        <ChordBox
+          key={index}
           chord={chord || ' '}
-          color={chord ? 
-            (index === 0 ? 'bg-red-200' : ['bg-green-200', 'bg-sky-200', 'bg-fuchsia-200'][index - 1]) 
-            : 'bg-gray-200'}
+          color={
+            chord
+              ? index === 0
+                ? 'bg-red-200'
+                : ['bg-green-200', 'bg-sky-200', 'bg-fuchsia-200'][index - 1]
+              : 'bg-gray-200'
+          }
           onClick={() => chord && onChordClick(chord, index)}
           isSelected={index === selectedChordIndex && !!chord}
         />
       ))}
-    </div>
+    </motion.div>
   );
 };
 
@@ -91,11 +112,11 @@ const App = () => {
     const chord = `${root}${modifier}`;
     setCurrentChord(chord);
     try {
-      const fing = await sendDataToBackend({ 
-        root, 
-        modifier, 
-        fret, 
-        tuning: newTuning || tuning 
+      const fing = await sendDataToBackend({
+        root,
+        modifier,
+        fret,
+        tuning: newTuning || tuning
       });
       if (fing) {
         setFingerPositions(fing); // This will trigger the re-render and animation
@@ -105,24 +126,23 @@ const App = () => {
       console.error('Error sending chord data:', error);
     }
   };
-  
 
   const handleGenerateProgression = async () => {
     if (isGenerating) return;
-    
+
     setIsGenerating(true);
     try {
       const startingChord = `${chordState.root}${chordState.modifier}`;
       const result = await sendProgressionRequest({ starting_chord: startingChord });
-      
+
       if (result?.full_sequence) {
         let newProgression = [...result.full_sequence];
-        
+
         if (selectedChordIndex !== null && selectedChordIndex !== 0) {
           const selectedInNewProg = newProgression.findIndex(
-            chord => normalizeChordName(chord) === normalizeChordName(currentChord)
+            (chord) => normalizeChordName(chord) === normalizeChordName(currentChord)
           );
-          
+
           if (selectedInNewProg !== -1) {
             const rotationAmount = selectedChordIndex - selectedInNewProg;
             if (rotationAmount !== 0) {
@@ -130,9 +150,9 @@ const App = () => {
             }
           }
         }
-        
+
         setProgression(newProgression);
-        setProgressionData({...result, full_sequence: newProgression});
+        setProgressionData({ ...result, full_sequence: newProgression });
         setHasGenerated(true);
         setCurrentChord(startingChord);
       }
@@ -145,11 +165,11 @@ const App = () => {
 
   const handleTuningChange = (newTuning) => {
     setTuning(newTuning);
-    handleChordSelect({ 
-      root: chordState.root, 
-      modifier: chordState.modifier, 
+    handleChordSelect({
+      root: chordState.root,
+      modifier: chordState.modifier,
       fret: chordState.fret,
-      tuning: newTuning 
+      tuning: newTuning
     });
   };
 
@@ -160,22 +180,22 @@ const App = () => {
 
     const rootMatch = chord.match(/^[A-G][#b]?/);
     const modifierMatch = chord.match(/[^A-G#b].*/);
-    
+
     if (rootMatch && modifierMatch) {
       const newRoot = rootMatch[0];
       const newModifier = modifierMatch[0];
-      
-      setChordState(prev => ({
+
+      setChordState((prev) => ({
         ...prev,
         root: newRoot,
         modifier: newModifier
       }));
-      
-      handleChordSelect({ 
-        root: newRoot, 
-        modifier: newModifier, 
+
+      handleChordSelect({
+        root: newRoot,
+        modifier: newModifier,
         fret: chordState.fret,
-        tuning 
+        tuning
       });
     }
   };
@@ -186,7 +206,7 @@ const App = () => {
         <header className="Title font-sans ml-4 mt-8 font-bold text-5xl relative">
           chord sleuth
           <svg 
-            className="ransform translate-x-12 -translate-y-10" 
+            className="transform translate-x-12 -translate-y-10" 
             width="40" 
             height="40"
             style={{
@@ -202,8 +222,9 @@ const App = () => {
             />
           </svg>
         </header>
-        <div className="MainBox h-full w-full shrink flex flex-col justify-evenly items-center mt-8">
-          <div className="ChordSelect flex w-full h-auto justify-center mb-6">
+        
+        <div className="MainBox dvh-full w-full shrink flex flex-col justify-evenly items-center mt-8 px-4">
+          <div className="ChordSelect font-sans flex w-full h-auto justify-center mb-6">
             <ChordSelector 
               onSelect={handleChordSelect} 
               onTuningChange={handleTuningChange}
@@ -213,8 +234,8 @@ const App = () => {
             />
           </div>
 
-          <div className="ContentContainer flex-1 min-h-0 w-full flex flex-col items-center">
-            <div className="FretboardContainer flex-1 min-h-0 w-full flex justify-center items-center">
+          <div className="ContentContainer flex-1 min-h-0 h-1/2 w-full flex flex-col items-center">
+            <div className="FretboardContainer flex-1 min-h-0 h-1/4 w-full flex justify-center items-center p-4">
               <Fretboard
                 width="100%"
                 height="100%"
@@ -227,15 +248,15 @@ const App = () => {
               />
             </div>
             
-            <div className='Generation flex-none w-full flex flex-col justify-top items-center align-top mt-4 mb-10'>
-              <ChordBox
-                chord={isGenerating ? "generate progression" : "generate progression"} // Loads soooo fast that I can remove this
-                isSquare={false}
-                size="px-6 pt-2 pb-3"
-                fontsize="text-xl"
-                color="bg-red-200 hover:bg-red-300 transition"
+            <div className='Generation flex-none w-full flex flex-col font-thin justify-top items-center align-top mt-6 mb-8 mx-2'>
+              <button
                 onClick={handleGenerateProgression}
-              />
+                disabled={isGenerating}
+                className={'px-6 py-2 rounded-lg font-sans text-lg font-extralight transition bg-red-200'}
+              >
+                {isGenerating ? 'Generate Progression' : 'Generate Progression'}
+              </button>
+              
               {hasGenerated && progression.length > 0 && (
                 <ChordDisplay 
                   chords={progression} 

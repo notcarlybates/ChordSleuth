@@ -1,6 +1,7 @@
-// ChordSelector.jsx
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import sendDataToBackend from '../api/sendDataToBackend';
+import chordColors from '../utils/chordColors';
 
 const roots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const modifiers = [
@@ -29,13 +30,19 @@ const ChordSelector = ({
   const containerRef = useRef(null);
   const timeoutRef = useRef(null);
 
+  // Get colors for current chord
+  const currentChord = `${root}${modifier}`;
+  const colors = chordColors[currentChord] || chordColors['Cmaj'];
+  const bg50 = colors[50].hex;
+  const bg100 = colors[100].hex;
+  const bg200 = colors[200].hex;
+  const bg300 = colors[300].hex;
+
   useEffect(() => {
     if (selectedChord) {
-      // Case-insensitive match but preserve original casing
       const fullMatch = selectedChord.match(/^([A-G][#b]?)(.*)/i);
       if (fullMatch) {
         const [, matchedRoot, matchedModifier] = fullMatch;
-        // Find the original casing from our modifiers array
         const originalModifier = modifiers.find(m => 
           m.toLowerCase() === matchedModifier.trim().toLowerCase()
         ) || matchedModifier.trim() || 'maj';
@@ -43,7 +50,6 @@ const ChordSelector = ({
         setRoot(matchedRoot);
         setModifier(originalModifier);
         
-        // Trigger chord selection update
         sendDataToBackend({ 
           root: matchedRoot, 
           modifier: originalModifier, 
@@ -64,12 +70,10 @@ const ChordSelector = ({
     }
   }, [selectedChord]);
 
-  // Sync local tuning with parent's currentTuning
   useEffect(() => {
     setTuning(currentTuning);
   }, [currentTuning]);
 
-  // Fetch and send finger positions whenever chord changes
   useEffect(() => {
     const fetchAndSendPositions = async () => {
       const fing = await sendDataToBackend({ root, modifier, fret, tuning });
@@ -91,12 +95,14 @@ const ChordSelector = ({
     clearTimeout(timeoutRef.current);
     setIsOpen(true);
   };
-
+  
   const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setIsOpen(false);
-      setIsTuningMode(false);
-    }, 0);
+    if (isOpen) {
+      timeoutRef.current = setTimeout(() => {
+        setIsOpen(false);
+        setIsTuningMode(false);
+      }, 0);
+    }
   };
 
   const getActiveOptions = () => {
@@ -113,15 +119,12 @@ const ChordSelector = ({
     return fret;
   };
 
-  
-
   const setValue = (val) => {
     if (isTuningMode) {
       const newTuning = [...tuning];
       newTuning[selectedString] = val;
       handleTuningChange(newTuning);
       
-      // Also update the chord with new tuning
       sendDataToBackend({ 
         root, 
         modifier, 
@@ -167,105 +170,187 @@ const ChordSelector = ({
   };
 
   return (
-    <div
+    <motion.div
       ref={containerRef}
-      className={`relative transition-all duration-500 w-auto max-w-md rounded-lg p-7 ${
-        isOpen ? 'bg-red-100' : 'bg-red-200 hover:bg-red-300 cursor-pointer'
-      }`}
+      className="relative rounded-lg p-4 cursor-pointer"
+      style={{ 
+        minWidth: '200px',
+        maxWidth: '100%',
+        backgroundColor: bg200
+      }}
+      layout // This enables smooth layout animations including width
+      transition={{
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+        duration: 0.2
+      }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      whileHover={{
+        backgroundColor: bg200,
+        transition: { duration: 0.1 },
+      }}
     >
       {/* Preview when closed */}
-      <div className={`transition-opacity duration-400 ${isOpen ? 'opacity-0 h-0' : 'opacity-100 h-auto'}`}>
-        <div className="text-center font-sans font-extralight text-2xl">{`${root}${modifier} (Fret ${fret})`}</div>
-      </div>
+      <AnimatePresence>
+        {!isOpen && (
+          <motion.div
+            className="text-center font-sans font-extralight text-2xl"
+            style={{ backgroundColor: bg200 }}
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.1 }}
+          >
+            {`${root}${modifier} (Fret ${fret})`}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Expanded content */}
-      <div 
-        className={`transition-all duration-300 overflow-hidden ${
-          isOpen ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0'
-        }`}
-      >
-        <div className="flex flex-col gap-4">
-          {/* Preview Section */}
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col">
-              <div className="text-xl font-sans font-extralight">{`${root}${modifier}`}</div>
-              <div className="text-sm font-sans font-extralight text-gray-600">Fret {fret}</div>
-            </div>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsTuningMode(!isTuningMode);
-                if (!isTuningMode) setActiveTab(null);
-              }}
-              className={`inline-block relative px-3 py-2 min-w-[80px] text-sm rounded font-sans font-extralight ${
-                isTuningMode ? 'bg-red-200 hover:bg-red-300' : 'bg-red-200 hover:bg-red-300'
-              }`}
-            >
-              {isTuningMode ? 'chord' : 'tuning'}
-            </button>
-          </div>
-
-          {isTuningMode ? (
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+            style={{ backgroundColor: bg200 }}
+            layout // This ensures content changes animate smoothly
+          >
             <div className="flex flex-col gap-4">
-              <div className="flex gap-2">
-                {tuning.map((note, i) => (
-                  <button
-                    key={`string-select-${i}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedString(i);
-                    }}
-                    className={`px-2 py-1 text-sm font-sans font-extralight rounded ${
-                      i === selectedString ? 'bg-red-300 font-extralight' : 'hover:bg-red-100'
-                    }`}
-                  >
-                    {note}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              {["root", "modifier", "fret"].map((tab) => (
-                <button
-                  key={tab}
+              {/* Preview Section */}
+              <div className="flex justify-between items-center">
+                <motion.div 
+                  className="flex flex-col"
+                  initial={{ y: -10 }}
+                  animate={{ y: 0 }}
+                >
+                  <div className="text-xl font-sans font-extralight">{`${root}${modifier}`}</div>
+                  <div className="text-sm font-sans font-extralight text-gray-600">Fret {fret}</div>
+                </motion.div>
+
+                <motion.button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setActiveTab(tab);
+                    setIsTuningMode(!isTuningMode);
+                    if (!isTuningMode) setActiveTab(null);
                   }}
-                  className={`px-2 py-1 text-sm font-sans font-extralight rounded ${
-                    tab === activeTab ? 'bg-red-300 font-extralight' : 'hover:bg-red-100'
-                  }`}
+                  className="inline-block relative px-3 py-2 min-w-[80px] text-sm rounded font-sans font-extralight"
+                  style={{
+                    backgroundColor: isTuningMode ? bg100 : bg100,
+                    color: isTuningMode ? 'black' : 'inherit'
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    backgroundColor: bg50
+                  }}
                 >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Scroll-Wheel Section */}
-          <div className="max-h-40 overflow-y-scroll bg-red-200 scrollbar-thin scrollbar-thumb-red-300 scrollbar-track-red-400 rounded px-5 py-1">
-            {getActiveOptions().map((opt) => (
-              <div
-                key={opt}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setValue(opt);
-                }}
-                className={`cursor-pointer px-5 py-1 font-sans font-extralight rounded text-sm text-center ${
-                  getValue() === opt ? 'bg-red-300 font-extralight' : 'hover:bg-red-100'
-                }`}
-              >
-                {opt}
+                  {isTuningMode ? 'chord' : 'tuning'}
+                </motion.button>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+
+              {isTuningMode ? (
+                <motion.div
+                  className="flex gap-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {tuning.map((note, i) => (
+                    <motion.button
+                      key={`string-select-${i}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedString(i);
+                      }}
+                      className="px-2 py-1 text-sm font-sans font-extralight rounded"
+                      style={{
+                        backgroundColor: i === selectedString ? bg300 : bg100,
+                        color: i === selectedString ? 'black' : 'inherit'
+                      }}
+                      whileHover={{ 
+                        scale: 1.05,
+                        backgroundColor: bg50
+                      }}
+                      layout
+                    >
+                      {note}
+                    </motion.button>
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div
+                  className="flex gap-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {["root", "modifier", "fret"].map((tab) => (
+                    <motion.button
+                      key={tab}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTab(tab);
+                      }}
+                      className="px-2 py-1 text-sm font-sans font-extralight rounded"
+                      style={{
+                        backgroundColor: tab === activeTab ? bg300 : bg100,
+                        color: tab === activeTab ? 'black' : 'inherit'
+                      }}
+                      whileHover={{ 
+                        scale: 1.05,
+                        backgroundColor: bg50
+                      }}
+                    >
+                      {tab}
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+
+              {/* Scroll-Wheel Section */}
+              <motion.div
+                className="max-h-40 overflow-y-scroll rounded px-5 py-1 scrollbar-thin"
+                style={{
+                  backgroundColor: bg100,
+                  scrollbarColor: `${bg300} ${bg100}`
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                {getActiveOptions().map((opt, idx) => {
+                  const isSelected = getValue() === opt;
+                  return (
+                    <motion.div
+                      key={opt}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setValue(opt);
+                      }}
+                      className="cursor-pointer px-5 py-1 font-sans font-extralight rounded text-sm text-center"
+                      style={{
+                        backgroundColor: isSelected ? bg300 : bg100,
+                        color: isSelected ? 'black' : 'inherit'
+                      }}
+                      whileHover={!isSelected ? { 
+                        scale: 1.03,
+                        backgroundColor: bg50
+                      } : {}}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0}}
+                    >
+                      {opt}
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

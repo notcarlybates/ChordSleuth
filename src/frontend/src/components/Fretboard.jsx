@@ -21,9 +21,16 @@ export default function Fretboard({
   const reversedFingerPositions = [...fingerPositions].reverse();
 
   const [prevPositions, setPrevPositions] = useState([]);
+
   useEffect(() => {
-    setPrevPositions(reversedFingerPositions);
+    // Only update after a short delay so the animation can run
+    const timeout = setTimeout(() => {
+      setPrevPositions(reversedFingerPositions);
+    }, 1); // adjust delay to match your animation duration
+  
+    return () => clearTimeout(timeout);
   }, [reversedFingerPositions]);
+  
 
   const pixelWidth = typeof width === 'number' ? width : maxWidth;
   const pixelHeight = typeof height === 'number' ? height : maxHeight;
@@ -84,126 +91,136 @@ export default function Fretboard({
   };
 
   const renderMarker = (stringIndex) => {
-    const currentPos = calc_frets(reversedFingerPositions)[stringIndex];
-    const prevPos = calc_frets(prevPositions)[stringIndex];
-    
-    const current = getShapePosition(currentPos, stringIndex);
-    const previous = prevPos ? getShapePosition(prevPos, stringIndex) : null;
+  const currentPos = calc_frets(reversedFingerPositions)[stringIndex];
+  const prevPos = calc_frets(prevPositions)[stringIndex];
   
-    // Determine animation properties based on transitions
-    let initialX, initialY, initialOpacity;
-    let animateX, animateY, animateOpacity;
-  
-    if (previous) {
-      // Transition FROM OPEN
-      if (previous.type === 'open') {
-        // Start from current position (appearing)
-        initialX = current.x;
-        initialY = current.y;
-        initialOpacity = 0;
-      } 
-      // Transition TO OPEN
-      else if (current.type === 'open') {
-        // Start from previous position (disappearing)
-        initialX = previous.x;
-        initialY = previous.y;
-        initialOpacity = 1;
-      }
-      // Normal transition (between circle/square)
-      else {
-        initialX = previous.x;
-        initialY = previous.y;
-        initialOpacity = 1;
-      }
-    } else {
-      // Initial render
+  const current = getShapePosition(currentPos, stringIndex);
+  const previous = prevPos ? getShapePosition(prevPos, stringIndex) : current;
+
+  // Determine animation properties based on transitions
+  let initialX, initialY, initialOpacity;
+  let animateX, animateY, animateOpacity;
+
+  if (previous) {
+    // Transition FROM OPEN
+    if (previous.type === 'open') {
       initialX = current.x;
       initialY = current.y;
       initialOpacity = 0;
+    } 
+    // Transition TO OPEN
+    else if (current.type === 'open') {
+      initialX = previous.x;
+      initialY = previous.y;
+      initialOpacity = 1;
     }
-  
-    // Determine animate properties
-    if (current.type === 'open') {
-      // Disappearing - stay in same position
-      animateX = initialX;
-      animateY = initialY;
-      animateOpacity = 0;
-    } else {
-      // Appearing or moving - go to current position
-      animateX = current.x;
-      animateY = current.y;
-      animateOpacity = 1;
+    // Normal transition (between circle/square)
+    else {
+      initialX = previous.x;
+      initialY = previous.y;
+      initialOpacity = 1;
     }
-  
-    const commonProps = {
-      fill: "rgb(254, 202, 202)",
-      initial: { 
-        x: initialX,
-        y: initialY,
-        opacity: initialOpacity
-      },
-      animate: { 
-        x: animateX,
-        y: animateY,
-        opacity: animateOpacity
-      },
-      transition: ANIMATION_EASING
-    };
-  
-    if (current.type === 'square') {
-      return (
-        <motion.rect
-          key={`square-${stringIndex}`}
-          x={-current.size/2}
-          y={-current.size/2}
-          width={current.size}
-          height={current.size}
-          rx="4"
-          {...commonProps}
-          initial={{
-            ...commonProps.initial,
-            rx: previous?.type === 'circle' ? 15 : 4
-          }}
-          animate={{
-            ...commonProps.animate,
-            rx: 4
-          }}
-        />
-      );
-    } else if (current.type === 'circle') {
-      return (
-        <motion.rect
-          key={`circle-${stringIndex}`}
-          x={-current.size/2}
-          y={-current.size/2}
-          width={current.size}
-          rx="15"
-          height={current.size}
-          {...commonProps}
-          initial={{
-            ...commonProps.initial,
-            rx: previous?.type === 'square' ? 4 : 15
-          }}
-          animate={{
-            ...commonProps.animate,
-            rx: 15
-          }}
-        />
-      );
-    } else {
-      // Open string - invisible marker
-      return (
-        <motion.rect
-          key={`open-${stringIndex}`}
-          x={-current.size/2}
-          y={-current.size/2}
-          width={current.size}
-          height={current.size}
-          {...commonProps}
-        />
-      );
-    }
+  } else {
+    // Initial render
+    initialX = current.x;
+    initialY = current.y;
+    initialOpacity = 0;
+    animateX = current.x;
+    animateY = current.y;
+    animateOpacity = 1;
+  }
+
+  // Determine animate properties
+  if (current.type === 'open' && previous) {
+    // Disappearing - stay in exact same position, only fade out
+    animateOpacity = 0;
+  } else {
+    // Appearing or moving - go to current position
+    animateX = current.x;
+    animateY = current.y;
+    animateOpacity = 1;
+  }
+
+  const commonProps = {
+    fill: "rgb(254, 202, 202)",
+    initial: { 
+      x: initialX,
+      y: initialY,
+      opacity: initialOpacity
+    },
+    animate: { 
+      x: animateX,
+      y: animateY,
+      opacity: animateOpacity
+    },
+    transition: ANIMATION_EASING
   };
+
+  // Rest of the function remains the same...
+  if (current.type === 'square') {
+    return (
+      <motion.rect
+        key={`square-${stringIndex}`}
+        x={-current.size/2}
+        y={-current.size/2}
+        width={current.size}
+        height={current.size}
+        rx="4"
+        {...commonProps}
+        initial={{
+          ...commonProps.initial,
+          rx: previous?.type === 'circle' ? 15 : 4
+        }}
+        animate={{
+          ...commonProps.animate,
+          rx: 4
+        }}
+      />
+    );
+  } else if (current.type === 'circle') {
+    return (
+      <motion.rect
+        key={`circle-${stringIndex}`}
+        x={-current.size/2}
+        y={-current.size/2}
+        width={current.size}
+        rx="15"
+        height={current.size}
+        {...commonProps}
+        initial={{
+          ...commonProps.initial,
+          rx: previous?.type === 'square' ? 4 : 15
+        }}
+        animate={{
+          ...commonProps.animate,
+          rx: 15
+        }}
+      />
+    );
+  } else {
+    return (
+      <motion.rect
+        key={`${current.type}-${stringIndex}`}
+        x={-current.size / 2}
+        y={-current.size / 2}
+        width={current.size}
+        height={current.size}// static, no animation
+        rx={currentPos == 'x' ? 4 : 0}
+        initial={{
+          ...commonProps.initial,
+          opacity: 0,
+        }}
+        animate={{
+          ...commonProps.animate,
+          opacity: 1,
+        }}
+        {...commonProps}
+      />
+
+
+    );
+  }
+};
 
   const markers = Array.from({ length: numStrings }).map((_, stringIndex) => (
     <g key={`marker-group-${stringIndex}`}>

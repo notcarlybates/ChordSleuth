@@ -1,0 +1,47 @@
+import React, { useEffect, useState } from 'react';
+import { injectChordColors } from '../utils/colorInjection';
+
+const ColorSelect = () => {
+  const [root, setRoot] = useState('A');   // default root
+  const [modifier, setModifier] = useState('maj');  // default modifier
+
+  // Whenever the root or modifier changes, inject the corresponding colors
+  useEffect(() => {
+    injectChordColors(root, modifier);
+  }, [root, modifier]);
+
+  return (
+    <div>
+      <div>
+        <label>Root:</label>
+        <select onChange={(e) => setRoot(e.target.value)} value={root}>
+          <option value="A">A</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+          <option value="E">E</option>
+          {/* Add more roots here */}
+        </select>
+      </div>
+
+      <div>
+        <label>Modifier:</label>
+        <select onChange={(e) => setModifier(e.target.value)} value={modifier}>
+          <option value="maj">maj</option>
+          <option value="min">min</option>
+          <option value="7">7</option>
+          <option value="maj7">maj7</option>
+          {/* Add more modifiers here */}
+        </select>
+      </div>
+
+      {/* Displaying the generated colors */}
+      <div className="mt-4">
+        <div className="p-4 bg-[var(--A-maj-primary)] text-white">Primary Color</div>
+        <div className="p-4 bg-[var(--A-maj-secondary)] text-black">Secondary Color</div>
+        <div className="p-4 bg-[var(--A-maj-third)] text-white">Third Color</div>
+      </div>
+    </div>
+  );
+};
+
+export default ColorSelect;

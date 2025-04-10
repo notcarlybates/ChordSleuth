@@ -1,5 +1,6 @@
 # Data
 chordonomicon.csv
+cutonomicon.csv
 
 # Logs
 logs
@@ -9,6 +10,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.pyc
 
 node_modules
 node_modules/

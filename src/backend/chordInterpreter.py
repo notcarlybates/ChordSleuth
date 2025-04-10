@@ -3,6 +3,7 @@ from csv import DictReader
 structures = {
     # Major & Perfect
     "1": 0,
+    "one": 1,
     "2": 2,
     "3": 4,
     "4": 5,
@@ -43,7 +44,8 @@ chord_struct = {
     'maj7': ['1', '3', '5', '7'],
     '5': ['1', '5'],
     'm6': ['1', 'b3', '5', '6'],
-    'sus4': ['1', '4', '5']
+    'sus4': ['1', '4', '5'],
+    '9': ['1', '3', 'b7', '9']
 }
 
 class Chord:
