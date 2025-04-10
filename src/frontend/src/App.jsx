@@ -98,13 +98,14 @@ const App = () => {
         tuning: newTuning || tuning 
       });
       if (fing) {
-        setFingerPositions(fing);
+        setFingerPositions(fing); // This will trigger the re-render and animation
         setChordState({ root, modifier, fret });
       }
     } catch (error) {
       console.error('Error sending chord data:', error);
     }
   };
+  
 
   const handleGenerateProgression = async () => {
     if (isGenerating) return;
@@ -226,9 +227,9 @@ const App = () => {
               />
             </div>
             
-            <div className='Generation flex-none w-full flex flex-col justify-center items-center mt-4 mb-10'>
+            <div className='Generation flex-none w-full flex flex-col justify-top items-center align-top mt-4 mb-10'>
               <ChordBox
-                chord={isGenerating ? "Generating..." : "Generate Progression"}
+                chord={isGenerating ? "generate progression" : "generate progression"} // Loads soooo fast that I can remove this
                 isSquare={false}
                 size="px-6 pt-2 pb-3"
                 fontsize="text-xl"

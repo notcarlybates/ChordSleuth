@@ -117,21 +117,39 @@ const ChordSelector = ({
 
   const setValue = (val) => {
     if (isTuningMode) {
-      // ... tuning handling remains the same
+      const newTuning = [...tuning];
+      newTuning[selectedString] = val;
+      handleTuningChange(newTuning);
+      
+      // Also update the chord with new tuning
+      sendDataToBackend({ 
+        root, 
+        modifier, 
+        fret, 
+        tuning: newTuning 
+      }).then(fing => {
+        if (onSelect) {
+          onSelect({
+            root,
+            modifier,
+            fret,
+            fing,
+            tuning: newTuning
+          });
+        }
+      });
     } else {
       if (activeTab === "root") setRoot(val);
       else if (activeTab === "modifier") setModifier(val);
       else setFret(val);
       
-      // Immediately report chord change
-      const chord = `${activeTab === "root" ? val : root}${activeTab === "modifier" ? val : modifier}`;
-      if (onSelect) {
-        sendDataToBackend({ 
-          root: activeTab === "root" ? val : root,
-          modifier: activeTab === "modifier" ? val : modifier,
-          fret,
-          tuning 
-        }).then(fing => {
+      sendDataToBackend({ 
+        root: activeTab === "root" ? val : root,
+        modifier: activeTab === "modifier" ? val : modifier,
+        fret,
+        tuning 
+      }).then(fing => {
+        if (onSelect) {
           onSelect({
             root: activeTab === "root" ? val : root,
             modifier: activeTab === "modifier" ? val : modifier,
@@ -139,8 +157,8 @@ const ChordSelector = ({
             fing,
             tuning
           });
-        });
-      }
+        }
+      });
     }
   };
 

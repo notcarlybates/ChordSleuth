@@ -6,14 +6,15 @@ export const calc_frets = (frets) => {
     const minFret = Math.min(...allNumbers.filter(f => f > 0)); // ignore 0s for min calculation
     const maxFret = Math.max(...allNumbers);
     
-    // Don't normalize if minFret is already <= 4
-    if (minFret <= 4) {
-        return frets.map(f => {
-            if (f === 0) return 'O';
-            if (f === 'x') return 'x';
-            return f;
-        });
-    }
+    // Don't normalize if maxFret is already <= 4
+    if (maxFret <= 4) {
+      return frets.map(f => {
+          if (f === 0) return 'O';
+          if (f === 'x') return 'x';
+          return f;
+      });
+  }
+  
     
     // Only normalize if minFret > 4
     return frets.map(f => {
@@ -25,20 +26,20 @@ export const calc_frets = (frets) => {
 };
   
   export const display_fret = (positions) => {
-    if (!positions || positions.length === 0) return '';
+    if (!positions || positions.length === 0) return '1';
   
     // Filter out non-numbers (like 'x') but keep 0s for now
     const numericPositions = positions.filter(
       pos => typeof pos === 'number' || pos === '0'
     ).map(Number);
   
-    if (numericPositions.length === 0) return '';
+    if (numericPositions.length === 0) return '1';
   
     // Get playable frets (excluding 0s)
     const playableFrets = numericPositions.filter(f => f !== 0);
     
     // If no playable frets, return empty string
-    if (playableFrets.length === 0) return '';
+    if (playableFrets.length === 0) return '1';
   
     const minFret = Math.min(...playableFrets);
     const maxFret = Math.max(...playableFrets);
