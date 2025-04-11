@@ -126,7 +126,7 @@ export default function Fretboard({
     const previous = prevPos ? getShapePosition(prevPos, stringIndex) : current;
 
     const commonProps = {
-      fill: chordData.colors[300].hex,
+      fill: chordData.colors[200].hex,
       initial: { 
         x: previous?.x || current.x,
         y: previous?.y || current.y,
