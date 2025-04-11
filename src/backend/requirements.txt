@@ -1,10 +1,10 @@
 
 fastapi==0.115.12
+pydantic==2.11.3
+vite==1.5.2
+numpy==1.23.5
 fastparquet==2024.11.0
 keras==3.9.2
 tensorflow==2.16.1
-uvicorn==0.34.0
-pydantic==2.11.3
-numpy==2.2.4
-vite==1.5.2
-fastapi==0.115.12
+fastapi
+uvicorn[standard]
