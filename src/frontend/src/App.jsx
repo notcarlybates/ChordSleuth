@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
 import sendDataToBackend from './api/sendDataToBackend';
 import sendProgressionRequest from './api/sendProgressionRequest';
 import chordColors from './utils/chordColors';
+import animationConfig from './utils/animateConfig';
 import './App.css';
 
 const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
@@ -25,61 +26,128 @@ const ChordBox = ({
 
   return (
     <motion.div
-  className={`relative mx-5 flex items-center justify-center rounded-lg shrink font-sans ${fontsize} ${size} ${
+      className={`relative mx-5 flex items-center justify-center rounded-lg shrink font-sans ${fontsize} ${size} ${
     isSquare ? 'aspect-square' : ''
-  } ${onClick ? 'cursor-pointer hover:opacity-80 transition' : ''} z-10`}  // Normal z-index
-  onClick={onClick}
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ duration: 0.1 }}
-  style={{
-    backgroundColor: bg200
-  }}
-  whileHover={{
-    backgroundColor: bg200,
-    scale: 1.1,
-    zIndex: 20,  // Adjust z-index on hover
-    transition: { duration: 0.1 }
-  }}
->
-  {/* Decorative back boxes */}
-  {isSelected && (
-    <>
-      <div
-        className="absolute -top-2 -left-2 w-4/5 h-4/5 -z-10 rounded-lg"
-        style={{ backgroundColor: bg300 }}
+      } ${onClick ? 'cursor-pointer' : ''}`}
+      onClick={onClick}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ 
+        opacity: 1, 
+        scale: 1,
+        backgroundColor: bg200
+      }}
+      whileHover={{
+        scale: 1.05,
+        transition: { 
+          type: 'spring',
+          stiffness: 400,
+          damping: 10
+        }
+      }}
+      whileTap={{
+        scale: 0.95,
+        transition: { duration: 0.1 }
+      }}
+      transition={{
+        duration: animationConfig.COLOR_TRANSITION,
+        ease: 'easeOut'
+      }}
+    >
+      {/* Background layer */}
+      <motion.div
+        className="absolute w-full h-full rounded-lg z-0"
+        initial={{ backgroundColor: bg200 }}
+        animate={{ backgroundColor: bg200 }}
+        transition={{ duration: animationConfig.COLOR_TRANSITION }}
       />
-      <div
-        className="absolute -bottom-2 -right-2 w-4/5 h-4/5 -z-10 rounded-lg"
-        style={{ backgroundColor: bg100 }}
-        whileHover={{
-          backgroundColor: bg200,
-          scale: 1.1,
-          transition: { duration: 0.1 }
+      
+      {/* Decorative back boxes with enhanced animations */}
+      <AnimatePresence>
+      {isSelected && (
+        <>
+          <motion.div
+            className="absolute w-4/5 h-4/5 z-0 rounded-lg"
+            style={{ backgroundColor: bg300 }}
+            initial={{ 
+              top: 0, 
+              left: 0,
+              opacity: 0
+            }}
+            animate={{ 
+              top: '-0.5rem', 
+              left: '-0.5rem',
+              opacity: 1
+            }}
+            exit={{
+              top: 0,
+              left: 0,
+              opacity: 0
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 500,
+              damping: 15,
+              delay: 0.1
+            }}
+          />
+          <motion.div
+            className="absolute w-4/5 h-4/5 z-0 rounded-lg"
+            style={{ backgroundColor: bg100 }}
+            initial={{ 
+              bottom: 0, 
+              right: 0,
+              opacity: 0
+            }}
+            animate={{ 
+              bottom: '-0.5rem', 
+              right: '-0.5rem',
+              opacity: 1
+            }}
+            exit={{
+              bottom: 0,
+              right: 0,
+              opacity: 0
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 500,
+              damping: 15,
+              delay: 0.15
+            }}
+          />
+        </>
+      )}
+      </AnimatePresence>
+      
+      {/* Chord text */}
+      <motion.div 
+  className="absolute w-full h-full z-0 rounded-lg flex items-center justify-center"
+
+        style={{ backgroundColor: bg200 }}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{
+          delay: 0.2,
+          type: 'spring',
+          stiffness: 500
         }}
-      />
-    </>
-  )}
-
-  {chord}
-</motion.div>
-
+      >
+        <div className="z-20">{chord}</div>
+        </motion.div>
+      </motion.div>
   );
 };
 
-
 const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
-  const displayChords = [...chords];
-  while (displayChords.length < 4) {
-    displayChords.push('');
-  }
+  // Ensure we always have 4 items, filling with empty strings if needed
+  const displayChords = Array(4).fill('').map((_, i) => chords[i] || '');
 
   return (
     <motion.div
       className="ChordDisplay flex items-center justify-center font-thin shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-4 md:w-5/6 lg:mx-5 lg:w-3/4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: animationConfig.COLOR_TRANSITION }}
     >
       {displayChords.map((chord, index) => (
         <ChordBox
@@ -164,28 +232,36 @@ const App = () => {
 
   const handleGenerateProgression = async () => {
     if (isGenerating) return;
-
+  
     setIsGenerating(true);
     try {
       const startingChord = `${chordState.root}${chordState.modifier}`;
       const result = await sendProgressionRequest({ starting_chord: startingChord });
-
+  
       if (result?.full_sequence) {
         let newProgression = [...result.full_sequence];
-
-        if (selectedChordIndex !== null && selectedChordIndex !== 0) {
-          const selectedInNewProg = newProgression.findIndex(
-            (chord) => normalizeChordName(chord) === normalizeChordName(currentChord)
-          );
-
-          if (selectedInNewProg !== -1) {
-            const rotationAmount = selectedChordIndex - selectedInNewProg;
-            if (rotationAmount !== 0) {
-              newProgression = rotateArray(newProgression, rotationAmount);
-            }
+        const normalizedCurrent = normalizeChordName(selectedChord || currentChord);
+  
+        // Find the index of our current chord in the new progression
+        const currentChordIndex = newProgression.findIndex(
+          chord => normalizeChordName(chord) === normalizedCurrent
+        );
+  
+        if (currentChordIndex !== -1 && selectedChordIndex !== null) {
+          // Instead of rotating, create a new array with the chord in the desired position
+          const rotatedProgression = [];
+          const progressionLength = newProgression.length;
+          
+          // Fill the progression ensuring our selected chord is at selectedChordIndex
+          for (let i = 0; i < 4; i++) {
+            const offset = i - selectedChordIndex;
+            const sourceIndex = (currentChordIndex + offset + progressionLength) % progressionLength;
+            rotatedProgression[i] = newProgression[sourceIndex] || '';
           }
+  
+          newProgression = rotatedProgression;
         }
-
+  
         setProgression(newProgression);
         setProgressionData({ ...result, full_sequence: newProgression });
         setHasGenerated(true);
@@ -254,6 +330,8 @@ const App = () => {
               cy="20"
               r="15"
               fill={bg200}
+              animate={{ fill: bg200 }}
+              transition={{ duration: animationConfig.COLOR_TRANSITION }}
             />
           </svg>
         </header>
@@ -285,26 +363,56 @@ const App = () => {
             </div>
             
             <div className='Generation flex-none w-full flex flex-col font-thin justify-top items-center align-top mt-6 mb-8 mx-2'>
-              <motion.button
-                onClick={handleGenerateProgression}
-                disabled={isGenerating}
-                className={'px-6 py-2 rounded-lg font-sans text-lg font-extralight transition'}
-                style={{
-                  backgroundColor: bg200
-                }}
-                whileHover={{
-                  backgroundColor: bg300,
-                  transition: { duration: 0.1 }
-                }}
-              >
-                {isGenerating ? 'Generating...' : 'Generate Progression'}
-              </motion.button>
+            <motion.button
+  onClick={handleGenerateProgression}
+  disabled={isGenerating}
+  className="rounded-lg font-sans text-lg font-extralight"
+  style={{
+    backgroundColor: bg200,
+    padding: '0.5rem 1.5rem'
+  }}
+  whileHover={{
+    scale: 1.03,
+    transition: { duration: 0.15, ease: 'easeOut' }
+  }}
+  whileTap={{
+    scale: 0.98,
+    transition: { duration: 0.1 }
+  }}
+>
+  <motion.div
+    key={isGenerating 
+      ? 'regenerate' 
+      : hasGenerated && progression.length > 0
+        ? 'regenerate'
+        : 'generate progression'}
+    initial={{ opacity: 0, width: 0 }}
+    animate={{ 
+      opacity: 1,
+      width: 'auto',
+      transition: {
+        opacity: { duration: 0.2, ease: 'easeInOut' },
+        width: { duration: 0.3, ease: [0.2, 0, 0.38, 0.9] } // Smooth width transition
+      }
+    }}
+    exit={{ opacity: 0, width: 0 }}
+    transition={{ duration: 0.2 }}
+    className="whitespace-nowrap inline-block"
+  >
+    {isGenerating 
+      ? 'regenerate'
+      : hasGenerated && progression.length > 0
+        ? 'regenerate'
+        : 'generate progression'}
+  </motion.div>
+</motion.button>
               
               {hasGenerated && progression.length > 0 && (
                 <ChordDisplay 
                   chords={progression} 
                   onChordClick={handleChordClick}
                   selectedChordIndex={selectedChordIndex}
+                  
                 />
               )}
             </div>

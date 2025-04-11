@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { calc_frets, display_fret } from "../utils/FretCalc";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ChordSelector from './ChordSelector';
 import chordColors from '../utils/chordColors';
 
@@ -16,7 +16,7 @@ export default function Fretboard({
   currentChord = ''
 }) {
   // Animation constants
-  const ANIMATION_DURATION = 1;
+  const ANIMATION_DURATION = 0.6;
   const ANIMATION_EASING = { ease: [0.25, 0.1, 0.25, 1], duration: ANIMATION_DURATION };
   
   // State for chord and colors
@@ -30,15 +30,22 @@ export default function Fretboard({
     }
   });
 
+  // Keep track of previous colors for transition
+  const prevColorsRef = useRef(chordData.colors);
+  // Keep track of previous positions
+  const [prevPositions, setPrevPositions] = useState([]);
+
   // Update chord data when currentChord changes
   useEffect(() => {
     if (currentChord && chordColors[currentChord]) {
+      prevColorsRef.current = chordData.colors;
       setChordData({
         name: currentChord,
         colors: chordColors[currentChord]
       });
     } else {
       // Fallback to Cmaj if chord not found
+      prevColorsRef.current = chordData.colors;
       setChordData({
         name: 'Cmaj',
         colors: chordColors['Cmaj']
@@ -50,12 +57,11 @@ export default function Fretboard({
   const reversedTuning = [...tuning].reverse();
   const reversedFingerPositions = [...fingerPositions].reverse();
 
-  const [prevPositions, setPrevPositions] = useState([]);
-
+  // Update previous positions after current positions change
   useEffect(() => {
     const timeout = setTimeout(() => {
       setPrevPositions(reversedFingerPositions);
-    }, 1);
+    }, 1); // Short delay to allow animation to run
   
     return () => clearTimeout(timeout);
   }, [reversedFingerPositions]);
@@ -125,17 +131,62 @@ export default function Fretboard({
     const current = getShapePosition(currentPos, stringIndex);
     const previous = prevPos ? getShapePosition(prevPos, stringIndex) : current;
 
+    // Determine animation properties based on transitions
+    let initialX, initialY, initialOpacity;
+    let animateX, animateY, animateOpacity;
+
+    if (previous) {
+      // Transition FROM OPEN
+      if (previous.type === 'open') {
+        initialX = current.x;
+        initialY = current.y;
+        initialOpacity = 0;
+      } 
+      // Transition TO OPEN
+      else if (current.type === 'open') {
+        initialX = previous.x;
+        initialY = previous.y;
+        initialOpacity = 1;
+      }
+      // Normal transition (between circle/square)
+      else {
+        initialX = previous.x;
+        initialY = previous.y;
+        initialOpacity = 1;
+      }
+    } else {
+      // Initial render
+      initialX = current.x;
+      initialY = current.y;
+      initialOpacity = 0;
+      animateX = current.x;
+      animateY = current.y;
+      animateOpacity = 1;
+    }
+
+    // Determine animate properties
+    if (current.type === 'open' && previous) {
+      // Disappearing - stay in exact same position, only fade out
+      animateOpacity = 0;
+    } else {
+      // Appearing or moving - go to current position
+      animateX = current.x;
+      animateY = current.y;
+      animateOpacity = 1;
+    }
+
     const commonProps = {
-      fill: chordData.colors[200].hex,
       initial: { 
-        x: previous?.x || current.x,
-        y: previous?.y || current.y,
-        opacity: previous ? 1 : 0
+        x: initialX,
+        y: initialY,
+        opacity: initialOpacity,
+        fill: prevColorsRef.current[200].hex
       },
       animate: { 
-        x: current.x,
-        y: current.y,
-        opacity: current.type === 'open' && previous ? 0 : 1
+        x: animateX,
+        y: animateY,
+        opacity: animateOpacity,
+        fill: chordData.colors[200].hex
       },
       transition: ANIMATION_EASING
     };
@@ -150,16 +201,34 @@ export default function Fretboard({
           height={current.size}
           rx="4"
           {...commonProps}
+          initial={{
+            ...commonProps.initial,
+            rx: previous?.type === 'circle' ? 15 : 4
+          }}
+          animate={{
+            ...commonProps.animate,
+            rx: 4
+          }}
         />
       );
     } else if (current.type === 'circle') {
       return (
-        <motion.circle
+        <motion.rect
           key={`circle-${stringIndex}`}
-          cx={0}
-          cy={0}
-          r={current.size/2}
+          x={-current.size/2}
+          y={-current.size/2}
+          width={current.size}
+          rx="15"
+          height={current.size}
           {...commonProps}
+          initial={{
+            ...commonProps.initial,
+            rx: previous?.type === 'square' ? 4 : 15
+          }}
+          animate={{
+            ...commonProps.animate,
+            rx: 15
+          }}
         />
       );
     } else {
@@ -170,7 +239,15 @@ export default function Fretboard({
           y={-current.size / 2}
           width={current.size}
           height={current.size}
-          rx={currentPos == 'x' ? 4 : 0}
+          rx={currentPos == 'x' ? 4 : 15}
+          initial={{
+            ...commonProps.initial,
+            opacity: 0,
+          }}
+          animate={{
+            ...commonProps.animate,
+            opacity: 1,
+          }}
           {...commonProps}
         />
       );
