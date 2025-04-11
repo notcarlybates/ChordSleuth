@@ -62,7 +62,8 @@ const ChordSelector = ({
               modifier: originalModifier, 
               fret, 
               fing, 
-              tuning 
+              tuning,
+              chord: `${root}${modifier}`
             });
           }
         });

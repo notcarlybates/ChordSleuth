@@ -4,6 +4,7 @@ import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
 import sendDataToBackend from './api/sendDataToBackend';
 import sendProgressionRequest from './api/sendProgressionRequest';
+import chordColors from './utils/chordColors';
 import './App.css';
 
 const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
@@ -12,25 +13,37 @@ const ChordBox = ({
   chord,
   size = 'h-full w-full',
   fontsize = 'text-2xl',
-  color = 'bg-red-200',
+  color,
   isSquare = true,
   onClick,
   isSelected = false
-}) => (
-  <motion.div
-    className={`mx-5 flex items-center justify-center rounded-lg shrink font-sans ${fontsize} ${size} ${color} ${
-      isSquare ? 'aspect-square' : ''
-    } ${onClick ? 'cursor-pointer hover:opacity-80 transition' : ''} ${
-      isSelected ? 'bg-purple-300' : '' // Changed to purple-300
-    }`}
-    onClick={onClick}
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ duration: 0.3 }}
-  >
-    {chord}
-  </motion.div>
-);
+}) => {
+  const colors = chordColors[chord] || chordColors['Cmaj'];
+  const bg100 = colors?.[100]?.hex || '#fecaca';
+  const bg200 = colors?.[200]?.hex || '#fca5a5';
+  const bg300 = colors?.[300]?.hex || '#f87171';
+
+  return (
+    <motion.div
+      className={`mx-5 flex items-center justify-center rounded-lg shrink font-sans ${fontsize} ${size} ${
+        isSquare ? 'aspect-square' : ''
+      } ${onClick ? 'cursor-pointer hover:opacity-80 transition' : ''}`}
+      style={{
+        backgroundColor: isSelected ? bg300 : bg100
+      }}
+      onClick={onClick}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.1 }}
+      whileHover={{
+        backgroundColor: bg200,
+        transition: { duration: 0.1 }
+      }}
+    >
+      {chord}
+    </motion.div>
+  );
+};
 
 const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
   const displayChords = [...chords];
@@ -43,19 +56,12 @@ const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
       className="ChordDisplay flex items-center justify-center font-thin shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-4 md:w-5/6 lg:mx-5 lg:w-3/4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 0.2 }}
     >
       {displayChords.map((chord, index) => (
         <ChordBox
           key={index}
           chord={chord || ' '}
-          color={
-            chord
-              ? index === 0
-                ? 'bg-red-200'
-                : ['bg-green-200', 'bg-sky-200', 'bg-fuchsia-200'][index - 1]
-              : 'bg-gray-200'
-          }
           onClick={() => chord && onChordClick(chord, index)}
           isSelected={index === selectedChordIndex && !!chord}
         />
@@ -79,6 +85,10 @@ const App = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [progressionData, setProgressionData] = useState(null);
   const [currentChord, setCurrentChord] = useState('');
+
+  const currentColors = chordColors[`${chordState.root}${chordState.modifier}`] || chordColors['Cmaj'];
+  const bg200 = currentColors[200].hex;
+  const bg300 = currentColors[300].hex;
 
   const normalizeChordName = (chord) => {
     if (!chord) return '';
@@ -119,7 +129,7 @@ const App = () => {
         tuning: newTuning || tuning
       });
       if (fing) {
-        setFingerPositions(fing); // This will trigger the re-render and animation
+        setFingerPositions(fing);
         setChordState({ root, modifier, fret });
       }
     } catch (error) {
@@ -218,7 +228,7 @@ const App = () => {
               cx="20"
               cy="20"
               r="15"
-              fill="rgb(254, 202, 202)"
+              fill={bg200}
             />
           </svg>
         </header>
@@ -244,18 +254,26 @@ const App = () => {
                 numFrets={4}
                 numStrings={6}
                 tuning={tuning}
+                currentChord={currentChord}
                 fingerPositions={fingerPositions}
               />
             </div>
             
             <div className='Generation flex-none w-full flex flex-col font-thin justify-top items-center align-top mt-6 mb-8 mx-2'>
-              <button
+              <motion.button
                 onClick={handleGenerateProgression}
                 disabled={isGenerating}
-                className={'px-6 py-2 rounded-lg font-sans text-lg font-extralight transition bg-red-200'}
+                className={'px-6 py-2 rounded-lg font-sans text-lg font-extralight transition'}
+                style={{
+                  backgroundColor: bg200
+                }}
+                whileHover={{
+                  backgroundColor: bg300,
+                  transition: { duration: 0.1 }
+                }}
               >
-                {isGenerating ? 'Generate Progression' : 'Generate Progression'}
-              </button>
+                {isGenerating ? 'Generating...' : 'Generate Progression'}
+              </motion.button>
               
               {hasGenerated && progression.length > 0 && (
                 <ChordDisplay 
