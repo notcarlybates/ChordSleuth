@@ -1,5 +1,6 @@
 
 fastapi==0.115.12
 fastparquet==2024.11.0
+keras==3.9.2
 uvicorn==0.34.0
 vite==1.5.2
