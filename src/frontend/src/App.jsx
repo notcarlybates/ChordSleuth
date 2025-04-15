@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
+import React from 'react';
+import './index.css';
 import sendDataToBackend from './api/sendDataToBackend';
 import sendProgressionRequest from './api/sendProgressionRequest';
 import chordColors from './utils/chordColors';
