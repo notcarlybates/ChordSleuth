@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
 import sendDataToBackend from '../api/sendDataToBackend';
 import chordColors from '../utils/chordColors';
 

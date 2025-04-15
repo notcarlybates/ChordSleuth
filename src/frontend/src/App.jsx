@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
+import React from 'react';
+import './index.css';
 import sendDataToBackend from './api/sendDataToBackend';
 import sendProgressionRequest from './api/sendProgressionRequest';
 import chordColors from './utils/chordColors';
-import './App.css';
 
 const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 

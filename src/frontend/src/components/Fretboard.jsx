@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { calc_frets, display_fret } from "../utils/FretCalc";
 import { useState, useEffect } from "react";
 import ChordSelector from './ChordSelector';
+import React from 'react';
 import chordColors from '../utils/chordColors';
 
 export default function Fretboard({
