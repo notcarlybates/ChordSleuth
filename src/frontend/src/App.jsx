@@ -363,49 +363,29 @@ const App = () => {
             </div>
             
             <div className='Generation flex-none w-full flex flex-col font-thin justify-top items-center align-top mt-6 mb-8 mx-2'>
-            <motion.button
-  onClick={handleGenerateProgression}
-  disabled={isGenerating}
-  className="rounded-lg font-sans text-lg font-extralight"
-  style={{
-    backgroundColor: bg200,
-    padding: '0.5rem 1.5rem'
-  }}
-  whileHover={{
-    scale: 1.03,
-    transition: { duration: 0.15, ease: 'easeOut' }
-  }}
-  whileTap={{
-    scale: 0.98,
-    transition: { duration: 0.1 }
-  }}
->
-  <motion.div
-    key={isGenerating 
-      ? 'regenerate' 
-      : hasGenerated && progression.length > 0
-        ? 'regenerate'
-        : 'generate progression'}
-    initial={{ opacity: 0, width: 0 }}
-    animate={{ 
-      opacity: 1,
-      width: 'auto',
-      transition: {
-        opacity: { duration: 0.2, ease: 'easeInOut' },
-        width: { duration: 0.3, ease: [0.2, 0, 0.38, 0.9] } // Smooth width transition
-      }
-    }}
-    exit={{ opacity: 0, width: 0 }}
-    transition={{ duration: 0.2 }}
-    className="whitespace-nowrap inline-block"
-  >
-    {isGenerating 
-      ? 'regenerate'
-      : hasGenerated && progression.length > 0
-        ? 'regenerate'
-        : 'generate progression'}
-  </motion.div>
-</motion.button>
+              <motion.button
+                onClick={handleGenerateProgression}
+                disabled={isGenerating}
+                className="rounded-lg font-sans text-lg font-extralight"
+                style={{
+                  backgroundColor: bg200,
+                  padding: '0.5rem 1.5rem'
+                }}
+                whileHover={{
+                  scale: 1.03,
+                  transition: { duration: 0.15, ease: 'easeOut' }
+                }}
+                whileTap={{
+                  scale: 0.98,
+                  transition: { duration: 0.1 }
+                }}
+              >
+                {isGenerating 
+                  ? 'regenerate'
+                  : hasGenerated && progression.length > 0
+                    ? 'regenerate'
+                    : 'generate progression'}
+              </motion.button>
               
               {hasGenerated && progression.length > 0 && (
                 <ChordDisplay 
