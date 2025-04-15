@@ -17,7 +17,7 @@ const ChordSelector = ({
   onSelect, 
   onTuningChange, 
   currentTuning = defaultTuning, 
-  initialChord = { root: 'D', modifier: 'maj7', fret: 3 },
+  initialChord = { root: 'C', modifier: 'maj7', fret: 3 },
   selectedChord 
 }) => {
   const [isOpen, setIsOpen] = useState(false);

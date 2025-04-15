@@ -146,7 +146,7 @@ const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
 
   return (
     <motion.div
-      className="ChordDisplay flex items-center justify-center font-thin shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-4 md:w-5/6 lg:mx-5 lg:w-3/4"
+      className="ChordDisplay flex items-center justify-center font-thin shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-3 sm:md:w-5/6 lg:mx-5 lg:w-3/4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: animationConfig.COLOR_TRANSITION }}
@@ -169,9 +169,9 @@ const App = () => {
   const [fingerPositions, setFingerPositions] = useState([]);
   const [tuning, setTuning] = useState([...defaultTuning]);
   const [chordState, setChordState] = useState({
-    root: 'D',
+    root: 'C',
     modifier: 'maj7',
-    fret: 3
+    fret: 1
   });
   const [progression, setProgression] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -315,28 +315,28 @@ const App = () => {
 
   return (
     <div className="WholePageContainer w-dvw h-dvh items-center align-center shrink">
-      <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-3/4 h-dvh">
-        <header className="Title font-sans ml-4 mt-8 font-bold text-5xl relative">
-          chord sleuth
-          <svg 
-            className="transform translate-x-12 -translate-y-10" 
-            width="40" 
-            height="40"
-            style={{
-              left: 'calc(50% + 2.5rem)',
-              top: '50%'
-            }}
-          >
-            <circle
-              cx="20"
-              cy="20"
-              r="15"
-              fill={bg200}
-              animate={{ fill: bg200 }}
-              transition={{ duration: animationConfig.COLOR_TRANSITION }}
-            />
-          </svg>
-        </header>
+      <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-auto h-dvh">
+      <header className="Title font-sans ml-4 mt-8 font-bold text-5xl relative">
+      <div className="flex items-center gap-0">
+  <span>ch</span>
+  <svg 
+    width="40" 
+    height="40"
+    viewBox="0 0 40 40"
+    className="block -mx-1"
+  >
+    <circle
+      cx="20"
+      cy="25"
+      r="15"
+      fill={bg200}
+      animate={{ fill: bg200 }}
+      transition={{ duration: animationConfig.COLOR_TRANSITION }}
+    />
+  </svg>
+  <span>rd sleuth</span>
+</div>
+</header>
         
         <div className="MainBox dvh-full w-full shrink flex flex-col justify-evenly items-center mt-8 px-4">
           <div className="ChordSelect font-sans flex w-full h-auto justify-center mb-6">
@@ -383,7 +383,7 @@ const App = () => {
                 }}
               >
                 {isGenerating 
-                  ? 'regenerate'
+                  ? 'generating...'
                   : hasGenerated && progression.length > 0
                     ? 'regenerate'
                     : 'generate progression'}

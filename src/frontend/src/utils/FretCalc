@@ -25,31 +25,35 @@ export const calc_frets = (frets) => {
     });
 };
   
-  export const display_fret = (positions) => {
-    if (!positions || positions.length === 0) return '1';
-  
-    // Filter out non-numbers (like 'x') but keep 0s for now
-    const numericPositions = positions.filter(
-      pos => typeof pos === 'number' || pos === '0'
-    ).map(Number);
-  
-    if (numericPositions.length === 0) return '1';
-  
-    // Get playable frets (excluding 0s)
-    const playableFrets = numericPositions.filter(f => f !== 0);
-    
-    // If no playable frets, return empty string
-    if (playableFrets.length === 0) return '1';
-  
-    const minFret = Math.min(...playableFrets);
-    const maxFret = Math.max(...playableFrets);
-  
-    // Check if any normalized position would be ≥5
-    const wouldNormalizeToX = playableFrets.some(f => (f - minFret + 1) >= 5);
-    if (wouldNormalizeToX) return minFret;
-  
-    // If maxFret > 4, only consider playable frets (ignore open strings)
-    const candidates = maxFret > 4 ? playableFrets : numericPositions;
-  
-    return Math.min(...candidates);
-  };
+export const display_fret = (positions) => {
+  if (!positions || positions.length === 0) return '1';
+
+  // Filter out non-numbers (like 'x') but keep 0s
+  const numericPositions = positions.filter(
+    pos => typeof pos === 'number' || pos === '0'
+  ).map(Number);
+
+  if (numericPositions.length === 0) return '1';
+
+  // Get playable frets (excluding open strings, i.e., 0s)
+  const playableFrets = numericPositions.filter(f => f > 0);
+
+  // If no fretted notes, return '1'
+  if (playableFrets.length === 0) return '1';
+
+  const minFret = Math.min(...playableFrets);
+  const maxFret = Math.max(...playableFrets);
+
+  // If minFret is 0 somehow (shouldn't be), return '1'
+  if (minFret === 0) return '1';
+
+  // Check if any normalized position would be ≥5
+  const wouldNormalizeToX = playableFrets.some(f => (f - minFret + 1) >= 5);
+  if (wouldNormalizeToX) return String(minFret);
+
+  // If maxFret > 4, only consider playable frets (ignore open strings)
+  const candidates = maxFret > 4 ? playableFrets : numericPositions;
+
+  const result = Math.min(...candidates);
+  return result === 0 ? '1' : String(result);
+};
