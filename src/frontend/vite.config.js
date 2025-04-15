@@ -10,5 +10,17 @@ export default defineConfig({
         autoprefixer()
       ]
     }
+  },
+  build: {
+    rollupOptions: {
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+          return
+        }
+        defaultHandler(warning)
+      }
+    },
+    outDir: 'dist',
+    emptyOutDir: true
   }
 })

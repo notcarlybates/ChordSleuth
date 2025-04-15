@@ -26,23 +26,23 @@ const ChordBox = ({
 
   return (
     <motion.div
-  className={`relative mx-5 flex items-center justify-center rounded-lg shrink font-sans ${fontsize} ${size} ${
-    isSquare ? 'aspect-square' : ''
-  } ${onClick ? 'cursor-pointer hover:opacity-80 transition' : ''} z-10`}  // Normal z-index
-  onClick={onClick}
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ duration: 0.1 }}
-  style={{
-    backgroundColor: bg200
-  }}
-  whileHover={{
-    backgroundColor: bg200,
-    scale: 1.1,
-    zIndex: 20,  // Adjust z-index on hover
-    transition: { duration: 0.1 }
-  }}
->
+      className={`relative mx-5 flex items-center justify-center rounded-lg shrink font-sans ${fontsize} ${size} ${
+        isSquare ? 'aspect-square' : ''
+      } ${onClick ? 'cursor-pointer hover:opacity-80 transition' : ''} z-10`}  // Normal z-index
+      onClick={onClick}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.1 }}
+      style={{
+        backgroundColor: bg200
+      }}
+      whileHover={{
+        backgroundColor: bg200,
+        scale: 1.1,
+        zIndex: 20,  // Adjust z-index on hover
+        transition: { duration: 0.1 }
+      }}
+    >
   {/* Decorative back boxes */}
   {isSelected && (
     <>
