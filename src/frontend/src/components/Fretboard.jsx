@@ -8,8 +8,8 @@ import chordColors from '../utils/chordColors';
 export default function Fretboard({
   width = "100%",
   height = "100%",
-  maxWidth = 420,
-  maxHeight = 250,
+  maxWidth = 500,
+  maxHeight = 320,
   numFrets = 24,
   numStrings = 6,
   tuning = [],

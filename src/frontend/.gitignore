@@ -9,7 +9,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+*.pyc
+*.cpython-312.pyc
 node_modules
 node_modules/
 *.local

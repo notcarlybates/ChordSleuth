@@ -14,9 +14,8 @@ const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 
 const ChordBox = ({
   chord,
-  size = 'h-full w-full',
-  fontsize = 'text-2xl',
-  color,
+  size = 'h-full w-4/5',
+  fontsize = 'text-sm sm:text-2xl',
   isSquare = true,
   onClick,
   isSelected = false
@@ -28,7 +27,7 @@ const ChordBox = ({
 
   return (
     <motion.div
-      className={`relative mx-5 flex items-center justify-center rounded-lg shrink font-sans ${fontsize} ${size} ${
+    className={`relative mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex items-center font-sans justify-center rounded-lg max-w-25 shrink font-sans ${fontsize} ${size} ${
     isSquare ? 'aspect-square' : ''
       } ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
@@ -146,7 +145,7 @@ const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
 
   return (
     <motion.div
-      className="ChordDisplay flex items-center justify-center font-thin shrink text-xl sm:text-2xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-3 sm:md:w-5/6 lg:mx-5 lg:w-3/4"
+      className="ChordDisplay flex items-center justify-center font-thin shrink text-xl sm:text-xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-3 sm:md:w-5/6 lg:mx-5 lg:w-3/4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: animationConfig.COLOR_TRANSITION }}
@@ -314,9 +313,9 @@ const App = () => {
   };
 
   return (
-    <div className="WholePageContainer w-dvw h-dvh items-center align-center shrink">
-      <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-auto h-dvh">
-      <header className="Title font-sans ml-4 mt-8 font-bold text-5xl relative">
+    <div className="WholePageContainer w-screen h-screen flex items-center justify-center overflow-hidden">
+      <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-full h-full">
+      <header className="Title font-sans ml-4 mt-8 font-bold text-5xl pb-6 relative" style={{ fontSize: '2.5rem'}}>
       <div className="flex items-center gap-0">
   <span>ch</span>
   <svg 
@@ -324,6 +323,7 @@ const App = () => {
     height="40"
     viewBox="0 0 40 40"
     className="block -mx-1"
+    style={{ width: '40px', height: '40px' }}
   >
     <circle
       cx="20"
@@ -338,8 +338,8 @@ const App = () => {
 </div>
 </header>
         
-        <div className="MainBox dvh-full w-full shrink flex flex-col justify-evenly items-center mt-8 px-4">
-          <div className="ChordSelect font-sans flex w-full h-auto justify-center mb-6">
+        <div className="MainBox flex-grow dvh-screen w-full shrink flex flex-col justify-evenly items-center mt-8 px-4">
+          <div className="ChordSelect font-sans flex w-full h-auto justify-center pb-6">
             <ChordSelector 
               onSelect={handleChordSelect} 
               onTuningChange={handleTuningChange}
@@ -349,13 +349,19 @@ const App = () => {
             />
           </div>
 
-          <div className="ContentContainer flex-1 min-h-0 h-1/2 w-full flex flex-col items-center">
-            <div className="FretboardContainer flex-1 min-h-0 h-1/4 w-full flex justify-center items-center p-4">
+          <div className="ContentContainer flex-1 min-h-0 h-1/5 w-full flex flex-col items-center">
+          <div className="
+              FretboardContainer w-full flex justify-center items-center mt-2 mb-2
+              h-[240px]  // Default for all screens
+              xs:h-[200px] // 400px+
+              sm:h-[220px] // 640px+
+              md:h-[390px] // 768px+
+              lg:h-[400px]       // Large screens
+              xl:h-[420px]       // Extra large
+            ">
               <Fretboard
                 width="100%"
                 height="100%"
-                maxWidth={420}
-                maxHeight={250}
                 numFrets={4}
                 numStrings={6}
                 tuning={tuning}
@@ -363,15 +369,15 @@ const App = () => {
                 fingerPositions={fingerPositions}
               />
             </div>
-            
-            <div className='Generation flex-none w-full flex flex-col font-thin justify-top items-center align-top mt-6 mb-8 mx-2'>
+                      
+            <div className='Generation w-full max-w-[800px] flex flex-col font-thin justify-center items-center mt-4 sm:mt-6 mb-4 sm:mb-8'>
               <motion.button
                 onClick={handleGenerateProgression}
                 disabled={isGenerating}
-                className="rounded-lg font-sans text-lg font-extralight"
+                className="rounded-lg font-sans text-base sm:text-lg md:text-xl font-extralight px-4 py-3 sm:px-6 sm:py-"
                 style={{
                   backgroundColor: bg200,
-                  padding: '0.5rem 1.5rem'
+                  padding: '1.0rem 1.5rem'
                 }}
                 whileHover={{
                   scale: 1.03,
