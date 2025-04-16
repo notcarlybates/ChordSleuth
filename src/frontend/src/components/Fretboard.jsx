@@ -9,7 +9,7 @@ export default function Fretboard({
   width = "100%",
   height = "100%",
   maxWidth = 500,
-  maxHeight = 320,
+  maxHeight = 350,
   numFrets = 24,
   numStrings = 6,
   tuning = [],
@@ -269,35 +269,39 @@ export default function Fretboard({
         aspectRatio: `${maxWidth / maxHeight}`
       }}>
       <div className="relative w-full h-full">
-        <div className="TuningDisplay absolute left-0 top-0 z-10 h-full w-[30px]">
-          {reversedTuning.map((label, i) => (
-            <div key={`label-${i}`}
-              className="text-black text-2xl font-sans font-extralight text-right -translate-x-14"
-              style={{
-                position: 'absolute',
-                top: `${(i * spacingY / pixelHeight) * 100}%`,
-                transform: 'translateY(-50%)',
-                width: '100%',
-              }}>
-              {label}
-            </div>
-          ))}
-          <div className="FretDisplay text-black text-2xl font-sans font-extralight text-center -translate-y-14"
-            style={{
-              position: 'absolute',
-              left: `${(spacingX / 2 / pixelWidth) * 1400}%`,
-              transform: 'translateX(-50%)',
-            }}>
-            {display_fret(reversedFingerPositions)}
-          </div>
-        </div>
-
         <svg className="absolute top-0 w-full h-full"
           viewBox={`0 0 ${pixelWidth} ${pixelHeight}`}
           preserveAspectRatio="xMidYMid meet"
           overflow="visible">
           {lines}
           {markers}
+          
+          {/* Tuning Display - now inside SVG */}
+          {reversedTuning.map((label, i) => (
+            <text
+              key={`label-${i}`}
+              x="-20" // Position to the left of the fretboard
+              y={i * spacingY}
+              textAnchor="end"
+              dominantBaseline="middle"
+              className="text-3xl font-sans font-extralight"
+              fill="black"
+            >
+              {label}
+            </text>
+          ))}
+          
+          {/* Fret Display - now inside SVG */}
+          <text
+            x={spacingX / 2}
+            y="-20" // Position above the fretboard
+            textAnchor="middle"
+            dominantBaseline="bottom"
+            className="text-3xl font-sans font-extralight"
+            fill="black"
+          >
+            {display_fret(reversedFingerPositions)}
+          </text>
         </svg>
       </div>
     </div>

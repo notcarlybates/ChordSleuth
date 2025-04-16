@@ -15,7 +15,7 @@ const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 const ChordBox = ({
   chord,
   size = 'h-full w-4/5',
-  fontsize = 'text-sm sm:text-2xl',
+  fontsize = 'text-xl font-light',
   isSquare = true,
   onClick,
   isSelected = false
@@ -349,19 +349,21 @@ const App = () => {
             />
           </div>
 
-          <div className="ContentContainer flex-1 min-h-0 h-1/5 w-full flex flex-col items-center">
+          <div className="ContentContainer flex-1 min-h-0 h-1/5 w-full flex flex-col items-center mx-4">
           <div className="
-              FretboardContainer w-full flex justify-center items-center mt-2 mb-2
-              h-[240px]  // Default for all screens
+              FretboardContainer w-full flex justify-center items-center
+              h-[270px]  // Default for all screens
               xs:h-[200px] // 400px+
-              sm:h-[220px] // 640px+
-              md:h-[390px] // 768px+
+              sm:h-[320px] // 640px+
+              md:h-[380px] // 768px+
               lg:h-[400px]       // Large screens
-              xl:h-[420px]       // Extra large
+              xl:h-[500px]       // Extra large
             ">
               <Fretboard
                 width="100%"
                 height="100%"
+                maxWidth = '420'
+                maxHeight = '350'
                 numFrets={4}
                 numStrings={6}
                 tuning={tuning}
@@ -370,14 +372,14 @@ const App = () => {
               />
             </div>
                       
-            <div className='Generation w-full max-w-[800px] flex flex-col font-thin justify-center items-center mt-4 sm:mt-6 mb-4 sm:mb-8'>
+            <div className='Generation w-full max-w-[800px] flex flex-col font-thin justify-center items-center mt-8'>
               <motion.button
                 onClick={handleGenerateProgression}
                 disabled={isGenerating}
-                className="rounded-lg font-sans text-base sm:text-lg md:text-xl font-extralight px-4 py-3 sm:px-6 sm:py-"
+                className="rounded-lg font-sans text-base sm:text-lg md:text-xl font-extralight px-4 py-3 sm:px-6"
                 style={{
                   backgroundColor: bg200,
-                  padding: '1.0rem 1.5rem'
+                  padding: '0.8rem 1.0rem'
                 }}
                 whileHover={{
                   scale: 1.03,
