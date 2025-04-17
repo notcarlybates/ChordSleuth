@@ -15,7 +15,7 @@ const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 const ChordBox = ({
   chord,
   size = 'h-full w-4/5',
-  fontsize = 'text-xl font-light',
+  fontsize = 'text-xl font-thin',
   isSquare = true,
   onClick,
   isSelected = false
@@ -27,7 +27,7 @@ const ChordBox = ({
 
   return (
     <motion.div
-    className={`relative mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex items-center font-sans justify-center rounded-lg max-w-25 shrink font-sans ${fontsize} ${size} ${
+    className={`relative mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex items-center font-sans justify-center rounded-lg max-w-25 shrink font-thin ${fontsize} ${size} ${
     isSquare ? 'aspect-square' : ''
       } ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
@@ -313,103 +313,108 @@ const App = () => {
   };
 
   return (
-    <div className="WholePageContainer w-screen h-screen flex items-center justify-center overflow-hidden">
-      <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-full h-full">
-      <header className="Title font-sans ml-4 mt-8 font-bold text-5xl pb-6 relative" style={{ fontSize: '2.5rem'}}>
-      <div className="flex items-center gap-0">
-  <span>ch</span>
-  <svg 
-    width="40" 
-    height="40"
-    viewBox="0 0 40 40"
-    className="block -mx-1"
-    style={{ width: '40px', height: '40px' }}
-  >
-    <circle
-      cx="20"
-      cy="25"
-      r="15"
-      fill={bg200}
-      animate={{ fill: bg200 }}
-      transition={{ duration: animationConfig.COLOR_TRANSITION }}
-    />
-  </svg>
-  <span>rd sleuth</span>
-</div>
-</header>
-        
-        <div className="MainBox flex-grow dvh-screen w-full shrink flex flex-col justify-evenly items-center mt-8 px-4">
-          <div className="ChordSelect font-sans flex w-full h-auto justify-center pb-6">
-            <ChordSelector 
-              onSelect={handleChordSelect} 
-              onTuningChange={handleTuningChange}
-              currentTuning={tuning}
-              initialChord={chordState}
-              selectedChord={selectedChord}
-            />
+    <div className="ipad-scale w-full h-full flex items-center justify-center">
+      <div className="WholePageContainer w-screen h-screen flex items-center justify-center overflow-x-hidden">
+        <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-full h-full">
+        <div className='title-scooch relative'>
+          <header className="Title font-sans ml-4 mt-6 font-bold text-5xl pb-6 relative" style={{ fontSize: '2.5rem'}}>
+            <div className="flex items-center gap-0">
+              <span>ch</span>
+                <svg 
+                  width="40" 
+                  height="40"
+                  viewBox="0 0 40 40"
+                  className="block -mx-1"
+                  style={{ width: '40px', height: '40px' }}
+                >
+                  <circle
+                    cx="20"
+                    cy="25"
+                    r="15"
+                    fill={bg200}
+                    animate={{ fill: bg200 }}
+                    transition={{ duration: animationConfig.COLOR_TRANSITION }}
+                  />
+                </svg>
+              <span>rd sleuth</span>
+            </div>
+          </header>
+          </div>
+          
+          <div className="MainBox flex-grow dvh-screen w-full shrink flex flex-col justify-evenly items-center mt-4 px-4">
+            <div className="ChordSelect font-sans flex w-full h-auto justify-center pb-6">
+              <ChordSelector 
+                onSelect={handleChordSelect} 
+                onTuningChange={handleTuningChange}
+                currentTuning={tuning}
+                initialChord={chordState}
+                selectedChord={selectedChord}
+              />
           </div>
 
-          <div className="ContentContainer flex-1 min-h-0 h-1/5 w-full flex flex-col items-center mx-4">
-          <div className="
-              FretboardContainer w-full flex justify-center items-center
-              h-[270px]  // Default for all screens
-              xs:h-[200px] // 400px+
-              sm:h-[320px] // 640px+
-              md:h-[380px] // 768px+
-              lg:h-[400px]       // Large screens
-              xl:h-[500px]       // Extra large
-            ">
-              <Fretboard
-                width="100%"
-                height="100%"
-                maxWidth = '420'
-                maxHeight = '350'
-                numFrets={4}
-                numStrings={6}
-                tuning={tuning}
-                currentChord={currentChord}
-                fingerPositions={fingerPositions}
-              />
+            <div className="ContentContainer flex-1 min-h-0 h-1/5 w-full flex flex-col items-center mx-4">
+              <div className="
+                  FretboardContainer w-full flex justify-center items-center
+                  h-[270px]  // Default for all screens
+                  xs:h-[200px] // 400px+
+                  sm:h-[320px] // 640px+
+                  md:h-[380px] // 768px+
+                  lg:h-[400px]       // Large screens
+                  xl:h-[500px]       // Extra large
+                  ">
+
+                  <Fretboard
+                    width="100%"
+                    height="100%"
+                    maxWidth = '420'
+                    maxHeight = '350'
+                    numFrets={4}
+                    numStrings={6}
+                    tuning={tuning}
+                    currentChord={currentChord}
+                    fingerPositions={fingerPositions}
+                  />
+              </div>
+                        
+              <div className='Generation w-full max-w-[800px] flex flex-col font-thin justify-center items-center mt-4'>
+                <motion.button
+                  onClick={handleGenerateProgression}
+                  disabled={isGenerating}
+                  className="rounded-lg font-sans text-base sm:text-lg md:text-xl px-4 py-3 sm:px-6"
+                  style={{
+                    backgroundColor: bg200,
+                    padding: '0.8rem 1.0rem'
+                  }}
+                  whileHover={{
+                    scale: 1.03,
+                    transition: { duration: 0.15, ease: 'easeOut' }
+                  }}
+                  whileTap={{
+                    scale: 0.98,
+                    transition: { duration: 0.1 }
+                  }}
+                >
+                  {isGenerating 
+                    ? 'generating...'
+                    : hasGenerated && progression.length > 0
+                      ? 'regenerate'
+                      : 'generate progression'}
+                </motion.button>
+                
+                {hasGenerated && progression.length > 0 && (
+                  <ChordDisplay 
+                    chords={progression} 
+                    onChordClick={handleChordClick}
+                    selectedChordIndex={selectedChordIndex}
+                    
+                  />
+                )}
+              </div>
+             </div>
             </div>
-                      
-            <div className='Generation w-full max-w-[800px] flex flex-col font-thin justify-center items-center mt-8'>
-              <motion.button
-                onClick={handleGenerateProgression}
-                disabled={isGenerating}
-                className="rounded-lg font-sans text-base sm:text-lg md:text-xl font-extralight px-4 py-3 sm:px-6"
-                style={{
-                  backgroundColor: bg200,
-                  padding: '0.8rem 1.0rem'
-                }}
-                whileHover={{
-                  scale: 1.03,
-                  transition: { duration: 0.15, ease: 'easeOut' }
-                }}
-                whileTap={{
-                  scale: 0.98,
-                  transition: { duration: 0.1 }
-                }}
-              >
-                {isGenerating 
-                  ? 'generating...'
-                  : hasGenerated && progression.length > 0
-                    ? 'regenerate'
-                    : 'generate progression'}
-              </motion.button>
-              
-              {hasGenerated && progression.length > 0 && (
-                <ChordDisplay 
-                  chords={progression} 
-                  onChordClick={handleChordClick}
-                  selectedChordIndex={selectedChordIndex}
-                  
-                />
-              )}
-            </div>
-          </div>
+          </section>
         </div>
-      </section>
-    </div>
+      </div>
   );
 };
 
