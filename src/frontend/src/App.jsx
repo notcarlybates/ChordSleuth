@@ -376,7 +376,7 @@ const App = () => {
                   />
               </div>
                         
-              <div className='Generation w-full max-w-[800px] flex flex-col font-light justify-center items-center mt-4'>
+              <div className='Generation w-full max-w-[800px] flex flex-col font-extralight justify-center items-center mt-4'>
                 <motion.button
                   onClick={handleGenerateProgression}
                   disabled={isGenerating}
