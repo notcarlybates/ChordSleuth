@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
@@ -9,164 +9,15 @@ import sendProgressionRequest from './api/sendProgressionRequest';
 import chordColors from './utils/chordColors';
 import animationConfig from './utils/animateConfig';
 import './App.css';
+import { ChordBox } from './components/ChordBox';
+import { ChordDisplay } from './components/ChordDisplay';
 
 const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
-
-const ChordBox = ({
-  chord,
-  size = 'h-full w-4/5',
-  fontsize = 'text-xl font-thin',
-  isSquare = true,
-  onClick,
-  isSelected = false
-}) => {
-  const colors = chordColors[chord] || chordColors['Cmaj'];
-  const bg100 = colors?.[100]?.hex || '#fecaca';
-  const bg200 = colors?.[200]?.hex || '#fca5a5';
-  const bg300 = colors?.[300]?.hex || '#f87171';
-
-  return (
-    <motion.div
-    className={`relative mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex items-center font-sans justify-center rounded-lg max-w-25 shrink font-thin ${fontsize} ${size} ${
-    isSquare ? 'aspect-square' : ''
-      } ${onClick ? 'cursor-pointer' : ''}`}
-      onClick={onClick}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ 
-        opacity: 1, 
-        scale: 1,
-        backgroundColor: bg200
-      }}
-      whileHover={{
-        scale: 1.05,
-        transition: { 
-          type: 'spring',
-          stiffness: 400,
-          damping: 10
-        }
-      }}
-      whileTap={{
-        scale: 0.95,
-        transition: { duration: 0.1 }
-      }}
-      transition={{
-        duration: animationConfig.COLOR_TRANSITION,
-        ease: 'easeOut'
-      }}
-    >
-      {/* Background layer */}
-      <motion.div
-        className="absolute w-full h-full rounded-lg z-0"
-        initial={{ backgroundColor: bg200 }}
-        animate={{ backgroundColor: bg200 }}
-        transition={{ duration: animationConfig.COLOR_TRANSITION }}
-      />
-      
-      {/* Decorative back boxes with enhanced animations */}
-      <AnimatePresence>
-      {isSelected && (
-        <>
-          <motion.div
-            className="absolute w-4/5 h-4/5 z-0 rounded-lg"
-            style={{ backgroundColor: bg300 }}
-            initial={{ 
-              top: 0, 
-              left: 0,
-              opacity: 0
-            }}
-            animate={{ 
-              top: '-0.5rem', 
-              left: '-0.5rem',
-              opacity: 1
-            }}
-            exit={{
-              top: 0,
-              left: 0,
-              opacity: 0
-            }}
-            transition={{
-              type: 'spring',
-              stiffness: 500,
-              damping: 15,
-              delay: 0.1
-            }}
-          />
-          <motion.div
-            className="absolute w-4/5 h-4/5 z-0 rounded-lg"
-            style={{ backgroundColor: bg100 }}
-            initial={{ 
-              bottom: 0, 
-              right: 0,
-              opacity: 0
-            }}
-            animate={{ 
-              bottom: '-0.5rem', 
-              right: '-0.5rem',
-              opacity: 1
-            }}
-            exit={{
-              bottom: 0,
-              right: 0,
-              opacity: 0
-            }}
-            transition={{
-              type: 'spring',
-              stiffness: 500,
-              damping: 15,
-              delay: 0.15
-            }}
-          />
-        </>
-      )}
-      </AnimatePresence>
-      
-      {/* Chord text */}
-      <motion.div 
-  className="absolute w-full h-full z-0 rounded-lg flex items-center justify-center"
-
-        style={{ backgroundColor: bg200 }}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{
-          delay: 0.2,
-          type: 'spring',
-          stiffness: 500
-        }}
-      >
-        <div className="z-20">{chord}</div>
-        </motion.div>
-      </motion.div>
-  );
-};
-
-const ChordDisplay = ({ chords, onChordClick, selectedChordIndex }) => {
-  // Ensure we always have 4 items, filling with empty strings if needed
-  const displayChords = Array(4).fill('').map((_, i) => chords[i] || '');
-
-  return (
-    <motion.div
-      className="ChordDisplay flex items-center justify-center font-thin shrink text-xl sm:text-xl md:text-3xl lg:text-4xl w-full h-full mx-2 mt-6 sm:mx-3 md:mx-3 sm:md:w-5/6 lg:mx-5 lg:w-3/4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: animationConfig.COLOR_TRANSITION }}
-    >
-      {displayChords.map((chord, index) => (
-        <ChordBox
-          key={index}
-          chord={chord || ' '}
-          onClick={() => chord && onChordClick(chord, index)}
-          isSelected={index === selectedChordIndex && !!chord}
-        />
-      ))}
-    </motion.div>
-  );
-};
-
-
 
 const App = () => {
   const [fingerPositions, setFingerPositions] = useState([]);
   const [tuning, setTuning] = useState([...defaultTuning]);
+  const [showInfo, setShowInfo] = useState(false);
   const [chordState, setChordState] = useState({
     root: 'C',
     modifier: 'maj7',
@@ -179,6 +30,9 @@ const App = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [progressionData, setProgressionData] = useState(null);
   const [currentChord, setCurrentChord] = useState('');
+
+  const popupRef = useRef(null);
+  const infoButtonRef = useRef(null);
 
   const currentColors = chordColors[`${chordState.root}${chordState.modifier}`] || chordColors['Cmaj'];
   const bg200 = currentColors[200].hex;
@@ -194,6 +48,30 @@ const App = () => {
     n = n % len;
     return arr.slice(n).concat(arr.slice(0, n));
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (popupRef.current && !popupRef.current.contains(event.target)) {
+        if (infoButtonRef.current && !infoButtonRef.current.contains(event.target)) {
+          setShowInfo(false);
+        }
+      }
+    };
+  
+    let timeoutId;
+    
+    if (showInfo) {
+      document.addEventListener('mousedown', handleClickOutside);
+      timeoutId = setTimeout(() => {
+        setShowInfo(false);
+      }, 4000);
+    }
+  
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [showInfo]);
 
   useEffect(() => {
     if (hasGenerated && currentChord && progressionData) {
@@ -313,13 +191,13 @@ const App = () => {
   };
 
   return (
-    <div className="ipad-scale w-full h-full flex items-center justify-center">
+    <div className="ipad-scale w-full h-full flex items-center align-center justify-center">
       <div className="WholePageContainer w-screen h-screen flex items-center justify-center overflow-x-hidden">
         <section className="MainPage flex flex-col m-auto xl:w-1/2 lg:w-3/4 m:w-3/2 sm:w-full h-full">
-        <div className='title-scooch relative'>
-          <header className="Title font-sans ml-4 mt-6 font-bold text-5xl pb-6 relative" style={{ fontSize: '2.5rem'}}>
-            <div className="flex items-center gap-0">
-              <span>ch</span>
+          <div className='title-scooch relative'>
+            <header className="Title font-sans ml-4 mr-4 mt-4 font-bold text-5xl xl:pt-3 pb-6 xl:pb-2 relative" style={{ fontSize: '2.5rem'}}>
+              <div className="flex items-center gap-0">
+                <span>ch</span>
                 <svg 
                   width="40" 
                   height="40"
@@ -336,13 +214,90 @@ const App = () => {
                     transition={{ duration: animationConfig.COLOR_TRANSITION }}
                   />
                 </svg>
-              <span>rd sleuth</span>
-            </div>
-          </header>
+                <span>rd sleuth</span>
+                
+                {/* Info circle with popup */}
+                <div className="absolute right-0 xl:right-1/10 font-normal ml-4">
+                  <motion.div
+                    ref={infoButtonRef}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowInfo(!showInfo);
+                    }}
+                  >
+                    <svg 
+                      width="40" 
+                      height="40"
+                      viewBox="0 0 40 40"
+                      className="block -mx-1"
+                      style={{ width: '40px', height: '40px' }}
+                    >
+                      <circle
+                        cx="20"
+                        cy="25"
+                        r="15"
+                        fill={bg200}
+                        animate={{ fill: bg200 }}
+                        transition={{ duration: animationConfig.COLOR_TRANSITION }}
+                      />
+                      <text
+                        x="20"
+                        y="30"
+                        textAnchor="middle"
+                        fill="black"
+                        fontSize="15"
+                      >
+                        i
+                      </text>
+                    </svg>
+                  </motion.div>
+                  
+                  {/* Popup modal */}
+                  <AnimatePresence>
+                    {showInfo && (
+                      <motion.div
+                      ref={popupRef}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-50 bg-white rounded-lg shadow-lg p-4 z-50 border border-gray-200"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center mb-2">
+                        <a 
+                          href="https://github.com/notcarlybates" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center"
+                        >
+                          <svg
+                            className="w-5 h-5 mr-2"
+                            aria-hidden="true"
+                            fill={"currentColor"}
+                            viewBox="0 0 24 24"
+                          >
+                            <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-sm text-gray-800 hover:text-blue-600">Made by Carly Bates</span>
+                          {/* <span className={`text-sm text-gray-800 hover:text-[${bg300}]`}>Made by Carly Bates */}
+
+                        </a>
+                      </div>
+                      <p className="text-sm text-gray-600">User guide coming soon.</p>
+                    </motion.div>
+                      
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </header>
           </div>
           
-          <div className="MainBox flex-grow dvh-screen w-full shrink flex flex-col justify-evenly items-center mt-4 px-4">
-            <div className="ChordSelect font-sans flex w-full h-auto justify-center pb-6">
+          <div className="MainBox flex-grow dvh-screen w-full shrink flex flex-col justify-evenly align-center items-center mt-4 xl:mt-2 px-4">
+            <div className="ChordSelect font-sans flex w-full h-auto justify-center pb-6 xl:pb-2">
               <ChordSelector 
                 onSelect={handleChordSelect} 
                 onTuningChange={handleTuningChange}
@@ -352,22 +307,22 @@ const App = () => {
               />
           </div>
 
-            <div className="ContentContainer flex-1 min-h-0 h-1/5 w-full flex flex-col items-center mx-4">
+            <div className="ContentContainer flex-1 min-h-0 h-1/5 w-full flex flex-col items-center pt-10 xl:pt-0 mx-4">
               <div className="
                   FretboardContainer w-full flex justify-center items-center
-                  h-[270px]  // Default for all screens
+                  h-[230px]  // Default for all screens
                   xs:h-[200px] // 400px+
-                  sm:h-[320px] // 640px+
-                  md:h-[380px] // 768px+
-                  lg:h-[400px]       // Large screens
-                  xl:h-[500px]       // Extra large
+                  sm:h-[265px] // 640px+
+                  md:h-[265px] // 768px+
+                  lg:h-[270px] // Large screens
+                  xl:h-[378px] // Extra large
                   ">
 
                   <Fretboard
                     width="100%"
                     height="100%"
                     maxWidth = '420'
-                    maxHeight = '350'
+                    maxHeight = '300'
                     numFrets={4}
                     numStrings={6}
                     tuning={tuning}
@@ -376,7 +331,7 @@ const App = () => {
                   />
               </div>
                         
-              <div className='Generation w-full max-w-[800px] flex flex-col font-extralight justify-center items-center mt-4'>
+              <div className='Generation w-full max-w-[800px] flex flex-col font-extralight justify-center items-center mt-10 xl:mt-0'>
                 <motion.button
                   onClick={handleGenerateProgression}
                   disabled={isGenerating}
