@@ -3,14 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Fretboard from './components/Fretboard';
 import ChordSelector from './components/ChordSelector';
 import React from 'react';
-import './index.css';
+import './css/index.css';
 import sendDataToBackend from './api/sendDataToBackend';
 import sendProgressionRequest from './api/sendProgressionRequest';
 import chordColors from './utils/chordColors';
 import animationConfig from './utils/animateConfig';
-import './App.css';
+import './css/App.css';
 import { ChordBox } from './components/ChordBox';
 import { ChordDisplay } from './components/ChordDisplay';
+import { updateFavicon } from './utils/faviconUpdater';
 
 const defaultTuning = ['E', 'A', 'D', 'G', 'B', 'E'];
 
@@ -37,6 +38,10 @@ const App = () => {
   const currentColors = chordColors[`${chordState.root}${chordState.modifier}`] || chordColors['Cmaj'];
   const bg200 = currentColors[200].hex;
   const bg300 = currentColors[300].hex;
+
+  useEffect(() => {
+    updateFavicon(bg300);
+  }, [bg300]);
 
   const normalizeChordName = (chord) => {
     if (!chord) return '';
