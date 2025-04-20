@@ -321,6 +321,7 @@ const App = () => {
                   md:h-[265px] // 768px+
                   lg:h-[270px] // Large screens
                   xl:h-[378px] // Extra large
+                  max-[390px]:max-[740px]:scale-90
                   ">
 
                   <Fretboard
