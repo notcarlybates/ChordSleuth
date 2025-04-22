@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import sendDataToBackend from '../api/sendDataToBackend';
 import chordColors from '../utils/chordColors';
+import animationConfig from '../utils/animateConfig';
 
 const roots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const modifiers = [
@@ -38,6 +39,25 @@ const ChordSelector = ({
   const bg100 = colors[100].hex;
   const bg200 = colors[200].hex;
   const bg300 = colors[300].hex;
+
+  // Enhanced click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setIsTuningMode(false);
+      }
+    };
+
+    // Use both mouse and touch events for better mobile support
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedChord) {
@@ -93,12 +113,14 @@ const ChordSelector = ({
     }
   };
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (e) => {
+    e.stopPropagation();
     clearTimeout(timeoutRef.current);
     setIsOpen(true);
   };
   
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e) => {
+    e.stopPropagation();
     if (isOpen) {
       timeoutRef.current = setTimeout(() => {
         setIsOpen(false);
@@ -180,15 +202,22 @@ const ChordSelector = ({
         maxWidth: '100%',
         backgroundColor: bg200
       }}
-      layout // This enables smooth layout animations including width
+      layout
       transition={{
         type: "spring",
         stiffness: 300,
         damping: 30,
-        duration: 0.2
+        duration: 0.2,
+        backgroundColor: { duration: animationConfig.COLOR_TRANSITION }
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!isOpen) {
+          setIsOpen(true);
+        }
+      }}
       whileHover={{
         backgroundColor: bg200,
         transition: { duration: 0.1 },
@@ -202,7 +231,10 @@ const ChordSelector = ({
             style={{ backgroundColor: bg200 }}
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.1 }}
+            transition={{ 
+              duration: 0.1,
+              backgroundColor: { duration: animationConfig.COLOR_TRANSITION }
+            }}
           >
             {`${root}${modifier} (Fret ${fret})`}
           </motion.div>
@@ -216,10 +248,14 @@ const ChordSelector = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ 
+              duration: 0.2,
+              backgroundColor: { duration: animationConfig.COLOR_TRANSITION }
+            }}
             className="overflow-hidden"
             style={{ backgroundColor: bg200 }}
-            layout // This ensures content changes animate smoothly
+            layout
+            onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
           >
             <div className="flex flex-col gap-4">
               {/* Preview Section */}
@@ -239,15 +275,19 @@ const ChordSelector = ({
                     setIsTuningMode(!isTuningMode);
                     if (!isTuningMode) setActiveTab(null);
                   }}
-                  className="inline-block relative px-3 py-2 min-w-[80px] text-sm rounded font-sans font-extralight"
-                  style={{
-                    backgroundColor: isTuningMode ? bg100 : bg100,
-                    color: isTuningMode ? 'black' : 'inherit'
-                  }}
+                  className="inline-block relative px-2 py-2 right-1 min-w-[80px] text-sm rounded font-sans font-extralight"
+                  initial={{ backgroundColor: bg100 }}
+                  animate={{ backgroundColor: bg100 }}
                   whileTap={{ scale: 0.95 }}
                   whileHover={{ 
                     scale: 1.05,
                     backgroundColor: bg50
+                  }}
+                  transition={{
+                    backgroundColor: { 
+                      duration: 0.05,
+                      ease: "easeIn"
+                    }
                   }}
                 >
                   {isTuningMode ? 'chord' : 'tuning'}
@@ -268,13 +308,19 @@ const ChordSelector = ({
                         setSelectedString(i);
                       }}
                       className="px-2 py-1 text-sm font-sans font-extralight rounded"
-                      style={{
-                        backgroundColor: i === selectedString ? bg300 : bg100,
-                        color: i === selectedString ? 'black' : 'inherit'
+                      initial={{ backgroundColor: bg100 }}
+                      animate={{ 
+                        backgroundColor: i === selectedString ? bg300 : bg100 
                       }}
                       whileHover={{ 
                         scale: 1.05,
                         backgroundColor: bg50
+                      }}
+                      transition={{
+                        backgroundColor: { 
+                          duration: 0.05,
+                          ease: "easeInOut"
+                        }
                       }}
                       layout
                     >
@@ -296,13 +342,19 @@ const ChordSelector = ({
                         setActiveTab(tab);
                       }}
                       className="px-2 py-1 text-sm font-sans font-extralight rounded"
-                      style={{
-                        backgroundColor: tab === activeTab ? bg300 : bg100,
-                        color: tab === activeTab ? 'black' : 'inherit'
+                      initial={{ backgroundColor: bg100 }}
+                      animate={{ 
+                        backgroundColor: tab === activeTab ? bg300 : bg100 
                       }}
                       whileHover={{ 
                         scale: 1.05,
                         backgroundColor: bg50
+                      }}
+                      transition={{
+                        backgroundColor: { 
+                          duration: 0.05,
+                          ease: "easeInOut"
+                        }
                       }}
                     >
                       {tab}
@@ -314,12 +366,20 @@ const ChordSelector = ({
               {/* Scroll-Wheel Section */}
               <motion.div
                 className="max-h-40 overflow-y-scroll rounded px-5 py-1 scrollbar-thin"
-                style={{
+                initial={{ 
                   backgroundColor: bg100,
                   scrollbarColor: `${bg300} ${bg100}`
                 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                animate={{ 
+                  backgroundColor: bg100,
+                  scrollbarColor: `${bg300} ${bg100}`
+                }}
+                transition={{
+                  backgroundColor: { 
+                    duration: 0.05,
+                    ease: "easeInOut"
+                  }
+                }}
               >
                 {getActiveOptions().map((opt, idx) => {
                   const isSelected = getValue() === opt;
@@ -331,17 +391,27 @@ const ChordSelector = ({
                         setValue(opt);
                       }}
                       className="cursor-pointer px-5 py-1 font-sans font-extralight rounded text-sm text-center"
-                      style={{
+                      initial={{ 
+                        backgroundColor: bg100,
+                        opacity: 0, 
+                        x: -20 
+                      }}
+                      animate={{ 
                         backgroundColor: isSelected ? bg300 : bg100,
-                        color: isSelected ? 'black' : 'inherit'
+                        opacity: 1, 
+                        x: 0 
                       }}
                       whileHover={!isSelected ? { 
                         scale: 1.03,
                         backgroundColor: bg50
                       } : {}}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0}}
+                      transition={{ 
+                        delay: 0,
+                        backgroundColor: { 
+                          duration: 0.05,
+                          ease: "easeInOut"
+                        }
+                      }}
                     >
                       {opt}
                     </motion.div>

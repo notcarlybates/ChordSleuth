@@ -69,7 +69,7 @@ const App = () => {
       document.addEventListener('mousedown', handleClickOutside);
       timeoutId = setTimeout(() => {
         setShowInfo(false);
-      }, 4000);
+      }, 30000);
     }
   
     return () => {
@@ -223,80 +223,111 @@ const App = () => {
                 
                 {/* Info circle with popup */}
                 <div className="absolute right-0 xl:right-1/10 font-normal ml-4">
-                  <motion.div
-                    ref={infoButtonRef}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowInfo(!showInfo);
-                    }}
-                  >
-                    <svg 
-                      width="40" 
-                      height="40"
-                      viewBox="0 0 40 40"
-                      className="block -mx-1"
-                      style={{ width: '40px', height: '40px' }}
-                    >
-                      <circle
-                        cx="20"
-                        cy="25"
-                        r="15"
-                        fill={bg200}
-                        animate={{ fill: bg200 }}
-                        transition={{ duration: animationConfig.COLOR_TRANSITION }}
-                      />
-                      <text
-                        x="20"
-                        y="30"
-                        textAnchor="middle"
-                        fill="black"
-                        fontSize="15"
-                      >
-                        i
-                      </text>
-                    </svg>
-                  </motion.div>
-                  
-                  {/* Popup modal */}
-                  <AnimatePresence>
-                    {showInfo && (
-                      <motion.div
-                      ref={popupRef}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-50 bg-white rounded-lg shadow-lg p-4 z-50 border border-gray-200"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center mb-2">
-                        <a 
-                          href="https://github.com/notcarlybates" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center"
-                        >
-                          <svg
-                            className="w-5 h-5 mr-2"
-                            aria-hidden="true"
-                            fill={ bg300 }
-                            viewBox="0 0 24 24"
-                          >
-                            <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                          </svg>
-                          <span className="text-sm text-gray-800 hover:text-blue-600">Made by Carly Bates</span>
-                          {/* <span className={`text-sm text-gray-800 hover:text-[${bg300}]`}>Made by Carly Bates */}
+  <motion.div
+    ref={infoButtonRef}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    className="cursor-pointer"
+    onClick={(e) => {
+      e.stopPropagation();
+      setShowInfo(!showInfo);
+    }}
+  >
+    <svg 
+      width="40" 
+      height="40"
+      viewBox="0 0 40 40"
+      className="block -mx-1"
+      style={{ width: '40px', height: '40px' }}
+    >
+      <circle
+        cx="20"
+        cy="25"
+        r="15"
+        fill={bg200}
+        animate={{ fill: bg200 }}
+        transition={{ duration: animationConfig.COLOR_TRANSITION }}
+      />
+      <text
+        x="20"
+        y="30"
+        textAnchor="middle"
+        fill="black"
+        fontSize="15"
+      >
+        i
+      </text>
+    </svg>
+  </motion.div>
+  
+  {/* Popup modal */}
+  <AnimatePresence>
+  {showInfo && (
+    <motion.div
+      ref={popupRef}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="absolute right-0 mt-2 w-64 bg-white font-extralight rounded-lg shadow-lg p-4 z-50 border border-gray-200"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="text-sm text-gray-800 space-y-3">
+        {/* New instructional text at top */}
+        <div className="pb-2">
+          <p>Select any chord, fret placement, and tuning to generate a voicing on the fretboard</p>
+        </div>
 
-                        </a>
-                      </div>
-                      <p className="text-sm text-gray-600">User guide coming soon.</p>
-                    </motion.div>
-                      
-                    )}
-                  </AnimatePresence>
-                </div>
+        {/* Visual indicators section */}
+        <div className="flex items-start">
+          <div className="flex-shrink-0 mt-1 mr-2">
+            <svg width="20" height="20" viewBox="0 0 20 20">
+              <circle cx="10" cy="10" r="8" fill={bg200} />
+            </svg>
+          </div>
+          <p>Finger placements are shown as circles</p>
+        </div>
+
+        <div className="flex items-start">
+          <div className="flex-shrink-0 mt-1 mr-2">
+            <svg width="20" height="20" viewBox="0 0 20 20">
+              <rect x="2" y="2" rx="2" width="16" height="16" fill={bg200} />
+            </svg>
+          </div>
+          <p>Muted or skipped strings are shown with squares</p>
+        </div>
+        
+        <div className="pt-2 border-t border-gray-200">
+          <p>Click <span className="font-normal">"generate progression"</span> to create a chord progression</p>
+        </div>
+        
+        <div className="pb-2">
+          <p>Click any chord in the progression to see how to play it</p>
+        </div>
+
+        {/* Moved attribution to bottom */}
+        <div className="pt-2 border-t border-gray-200 flex items-center">
+          <a 
+            href="https://github.com/notcarlybates" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center"
+          >
+            <svg
+              className="w-5 h-5 mr-2"
+              aria-hidden="true"
+              fill={bg300}
+              viewBox="0 0 24 24"
+            >
+              <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm text-gray-800 hover:text-blue-600">Made by Carly Bates</span>
+          </a>
+        </div>
+      </div>
+    </motion.div>
+  )}
+</AnimatePresence>
+</div>
               </div>
             </header>
           </div>
