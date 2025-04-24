@@ -8,3 +8,4 @@ keras==3.9.2
 tensorflow==2.16.1
 fastapi
 uvicorn[standard]
+lofash==4.17.21
