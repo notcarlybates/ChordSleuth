@@ -4,7 +4,8 @@
   "type": "module",
   "dependencies": {
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.4",
