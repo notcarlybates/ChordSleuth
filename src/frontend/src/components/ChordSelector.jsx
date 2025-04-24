@@ -4,6 +4,7 @@ import React from 'react';
 import sendDataToBackend from '../api/sendDataToBackend';
 import chordColors from '../utils/chordColors';
 import animationConfig from '../utils/animateConfig';
+import debounce from 'lodash/debounce';
 
 const roots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const modifiers = [
@@ -31,6 +32,7 @@ const ChordSelector = ({
   const [selectedString, setSelectedString] = useState(0);
   const containerRef = useRef(null);
   const timeoutRef = useRef(null);
+  const latestRequestId = useRef(0);
 
   // Get colors for current chord
   const currentChord = `${root}${modifier}`;
@@ -49,7 +51,6 @@ const ChordSelector = ({
       }
     };
 
-    // Use both mouse and touch events for better mobile support
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside);
     
@@ -59,6 +60,39 @@ const ChordSelector = ({
     };
   }, []);
 
+  // Single, debounced fetch function
+  const fetchFingering = useRef(
+    debounce(async (root, modifier, fret, tuning, requestId) => {
+      try {
+        const fing = await sendDataToBackend({ root, modifier, fret, tuning });
+        
+        // Only proceed if this is the most recent request
+        if (requestId === latestRequestId.current) {
+          if (fing && onSelect) {
+            onSelect({ 
+              root, 
+              modifier, 
+              fret, 
+              fing, 
+              tuning,
+              chord: `${root}${modifier}`
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching fingering:', error);
+      }
+    }, 200)
+  ).current;
+
+  // Single effect to handle all state changes
+  useEffect(() => {
+    // Increment request ID for each new request
+    const requestId = ++latestRequestId.current;
+    fetchFingering(root, modifier, fret, tuning, requestId);
+  }, [root, modifier, fret, tuning, fetchFingering]);
+
+  // Effect for handling external selectedChord changes
   useEffect(() => {
     if (selectedChord) {
       const fullMatch = selectedChord.match(/^([A-G][#b]?)(.*)/i);
@@ -70,41 +104,14 @@ const ChordSelector = ({
         
         setRoot(matchedRoot);
         setModifier(originalModifier);
-        
-        sendDataToBackend({ 
-          root: matchedRoot, 
-          modifier: originalModifier, 
-          fret, 
-          tuning 
-        }).then(fing => {
-          if (fing && onSelect) {
-            onSelect({ 
-              root: matchedRoot, 
-              modifier: originalModifier, 
-              fret, 
-              fing, 
-              tuning,
-              chord: `${root}${modifier}`
-            });
-          }
-        });
       }
     }
   }, [selectedChord]);
 
+  // Effect for handling tuning changes
   useEffect(() => {
     setTuning(currentTuning);
   }, [currentTuning]);
-
-  useEffect(() => {
-    const fetchAndSendPositions = async () => {
-      const fing = await sendDataToBackend({ root, modifier, fret, tuning });
-      if (fing && onSelect) {
-        onSelect({ root, modifier, fret, fing, tuning });
-      }
-    };
-    fetchAndSendPositions();
-  }, [root, modifier, fret]);
 
   const handleTuningChange = (newTuning) => {
     setTuning(newTuning);
@@ -148,44 +155,10 @@ const ChordSelector = ({
       const newTuning = [...tuning];
       newTuning[selectedString] = val;
       handleTuningChange(newTuning);
-      
-      sendDataToBackend({ 
-        root, 
-        modifier, 
-        fret, 
-        tuning: newTuning 
-      }).then(fing => {
-        if (onSelect) {
-          onSelect({
-            root,
-            modifier,
-            fret,
-            fing,
-            tuning: newTuning
-          });
-        }
-      });
     } else {
       if (activeTab === "root") setRoot(val);
       else if (activeTab === "modifier") setModifier(val);
       else setFret(val);
-      
-      sendDataToBackend({ 
-        root: activeTab === "root" ? val : root,
-        modifier: activeTab === "modifier" ? val : modifier,
-        fret,
-        tuning 
-      }).then(fing => {
-        if (onSelect) {
-          onSelect({
-            root: activeTab === "root" ? val : root,
-            modifier: activeTab === "modifier" ? val : modifier,
-            fret,
-            fing,
-            tuning
-          });
-        }
-      });
     }
   };
 
@@ -255,7 +228,7 @@ const ChordSelector = ({
             className="overflow-hidden"
             style={{ backgroundColor: bg200 }}
             layout
-            onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col gap-4">
               {/* Preview Section */}
