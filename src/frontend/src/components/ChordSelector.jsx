@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMem } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import React from 'react';
 import sendDataToBackend from '../api/sendDataToBackend';
 import chordColors from '../utils/chordColors';
 import animationConfig from '../utils/animateConfig';
-import debounce from 'lodash/debounce';
 
 const roots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const modifiers = [
@@ -31,7 +30,6 @@ const ChordSelector = ({
   const [isTuningMode, setIsTuningMode] = useState(false);
   const [selectedString, setSelectedString] = useState(0);
   const containerRef = useRef(null);
-  const timeoutRef = useRef(null);
   const latestRequestId = useRef(0);
 
   // Get colors for current chord
@@ -60,37 +58,32 @@ const ChordSelector = ({
     };
   }, []);
 
-  // Single, debounced fetch function
-  const fetchFingering = useRef(
-    debounce(async (root, modifier, fret, tuning, requestId) => {
-      try {
-        const fing = await sendDataToBackend({ root, modifier, fret, tuning });
-        
-        // Only proceed if this is the most recent request
-        if (requestId === latestRequestId.current) {
-          if (fing && onSelect) {
-            onSelect({ 
-              root, 
-              modifier, 
-              fret, 
-              fing, 
-              tuning,
-              chord: `${root}${modifier}`
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching fingering:', error);
+  const fetchFingering = async (root, modifier, fret, tuning) => {
+    const requestId = ++latestRequestId.current;
+    
+    try {
+      const fing = await sendDataToBackend({ root, modifier, fret, tuning });
+      
+      if (requestId === latestRequestId.current && fing && onSelect) {
+        onSelect({ 
+          root, 
+          modifier, 
+          fret, 
+          fing, 
+          tuning,
+          chord: `${root}${modifier}`
+        });
       }
-    }, 200)
-  ).current;
+    } catch (error) {
+      console.error('Error fetching fingering:', error);
+    }
+  };
+  
 
   // Single effect to handle all state changes
   useEffect(() => {
-    // Increment request ID for each new request
-    const requestId = ++latestRequestId.current;
-    fetchFingering(root, modifier, fret, tuning, requestId);
-  }, [root, modifier, fret, tuning, fetchFingering]);
+    fetchFingering(root, modifier, fret, tuning);
+  }, [root, modifier, fret, tuning]);
 
   // Effect for handling external selectedChord changes
   useEffect(() => {
@@ -122,18 +115,13 @@ const ChordSelector = ({
 
   const handleMouseEnter = (e) => {
     e.stopPropagation();
-    clearTimeout(timeoutRef.current);
     setIsOpen(true);
   };
   
   const handleMouseLeave = (e) => {
     e.stopPropagation();
-    if (isOpen) {
-      timeoutRef.current = setTimeout(() => {
-        setIsOpen(false);
-        setIsTuningMode(false);
-      }, 0);
-    }
+    setIsOpen(false);
+    setIsTuningMode(false);
   };
 
   const getActiveOptions = () => {
